@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rare Angon: The Sky Runner</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+    <script type="module" src="js/main.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- Layer Game -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- UI: HUD -->
+      <div id="ui-hud" style="display: none">
+        <div class="hud-box">SC: <span id="hud-score">00000</span></div>
+        <div class="hud-box" style="color: #ffd700">
+          © <span id="hud-coin">0</span>
+        </div>
+      </div>
+
+      <!-- UI: Loading -->
+      <div id="screen-loading" class="overlay-screen">
+        <h2 class="blink">MEMANGGIL ANGIN...</h2>
+        <p>Menyiapkan Mantra AI</p>
+      </div>
+
+      <!-- UI: Main Menu -->
+      <div id="screen-menu" class="overlay-screen" style="display: none">
+        <h1 class="title">
+          RARE ANGON<br /><span class="subtitle">THE SKY RUNNER</span>
+        </h1>
+        <div id="menu-coins" class="coin-display">KOIN: 0</div>
+        <button id="btn-start" class="btn-pixel">TERBANG (START)</button>
+        <button id="btn-shop" class="btn-pixel secondary">WARUNG (SHOP)</button>
+        <div class="hint">
+          KONTROL:<br />
+          ☝️ TELUNJUK = KIRI | ✌️ PEACE = KANAN | ✊ KEPAL = TENGAH
+        </div>
+      </div>
+
+      <!-- UI: Shop -->
+      <div id="screen-shop" class="overlay-screen" style="display: none">
+        <h2>WARUNG LAYANGAN</h2>
+        <div class="coin-display" style="color: #ffd700">
+          SISA KOIN: <span id="shop-coins">0</span>
+        </div>
+        <div id="shop-items" class="shop-grid">
+          <!-- Items injected by JS -->
+        </div>
+        <button id="btn-shop-back" class="btn-pixel secondary">KEMBALI</button>
+      </div>
+
+      <!-- UI: Game Over -->
+      <div id="screen-gameover" class="overlay-screen" style="display: none">
+        <h1 style="color: #d32f2f">YAH! MEGAT!</h1>
+        <div class="stats-box">
+          <p>SKOR AKHIR: <span id="go-score" style="color: #fff">0</span></p>
+          <p>HIGH SCORE: <span id="go-high" style="color: #ffd700">0</span></p>
+          <p>KOIN DAPAT: <span id="go-coin" style="color: #ffd700">0</span></p>
+        </div>
+        <button id="btn-restart" class="btn-pixel">MAIN LAGI</button>
+        <button id="btn-menu" class="btn-pixel secondary">MENU UTAMA</button>
+      </div>
+
+      <!-- Layer Webcam & Debug -->
+      <div class="webcam-container">
+        <div class="rec-badge">AI CAM</div>
+        <video id="webcam" playsinline></video>
+        <canvas id="debugCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+      <div class="d-pad">
+        <div class="d-btn left"></div>
+        <div class="d-btn right"></div>
+      </div>
+      <div class="action-btn">A</div>
+    </div>
+  </body>
+</html>
