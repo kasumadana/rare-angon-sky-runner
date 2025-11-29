@@ -1,0 +1,23 @@
+{
+  "name": "rare-angon-sky-runner",
+  "version": "2.0.0",
+  "description": "AI-powered endless runner game with traditional Indonesian kite theme",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx live-server --port=3000",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "game",
+    "ai",
+    "tensorflow",
+    "hand-gesture",
+    "pixel-art",
+    "indonesian-culture"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -1,4 +1,28 @@
+# Supabase Credentials (JANGAN COMMIT!)
+js/config/supabase.config.js
+
+# Node modules
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
-node_modules/
-.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+
+# Temporary files
+*.tmp
+.cache/

@@ -2,79 +2,252 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Rare Angon: The Sky Runner</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Scripts -->
+    
+    <!-- Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+    
+    <!-- Game Entry Point -->
     <script type="module" src="js/main.js"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="game-container">
-      <!-- Layer Game -->
+      <!-- Retro Scanline Effect -->
+      <div class="scanlines"></div>
+      
+      <!-- Main Game Canvas -->
       <canvas id="gameCanvas"></canvas>
 
-      <!-- UI: HUD -->
+      <!-- HUD (In-Game Only) -->
       <div id="ui-hud" style="display: none">
-        <div class="hud-box">SC: <span id="hud-score">00000</span></div>
-        <div class="hud-box" style="color: #ffd700">
-          © <span id="hud-coin">0</span>
+        <div class="hud-panel">
+          <div class="hud-row">
+            <span class="hud-label">SKOR</span>
+            <span id="hud-score" class="hud-value">00000</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">KOIN</span>
+            <div class="coin-display">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <span id="hud-coin" class="hud-value">0</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- UI: Loading -->
-      <div id="screen-loading" class="overlay-screen">
-        <h2 class="blink">MEMANGGIL ANGIN...</h2>
-        <p>Menyiapkan Mantra AI</p>
-      </div>
-
-      <!-- UI: Main Menu -->
-      <div id="screen-menu" class="overlay-screen" style="display: none">
-        <h1 class="title">
-          RARE ANGON<br /><span class="subtitle">THE SKY RUNNER</span>
-        </h1>
-        <div id="menu-coins" class="coin-display">KOIN: 0</div>
-        <button id="btn-start" class="btn-pixel">TERBANG (START)</button>
-        <button id="btn-shop" class="btn-pixel secondary">WARUNG (SHOP)</button>
-        <div class="hint">
-          KONTROL:<br />
-          ☝️ TELUNJUK = KIRI | ✌️ PEACE = KANAN | ✊ KEPAL = TENGAH
+      <!-- Loading Screen -->
+      <div id="screen-loading" class="overlay-screen flex-center">
+        <div class="panel loading-panel">
+          <h2 class="blink">⏳ MEMUAT...</h2>
+          <p class="subtitle">Menyiapkan Mantra AI</p>
+          <div class="loading-bar"><div class="loading-progress"></div></div>
         </div>
       </div>
 
-      <!-- UI: Shop -->
-      <div id="screen-shop" class="overlay-screen" style="display: none">
-        <h2>WARUNG LAYANGAN</h2>
-        <div class="coin-display" style="color: #ffd700">
-          SISA KOIN: <span id="shop-coins">0</span>
+      <!-- Main Menu -->
+      <div id="screen-menu" class="overlay-screen flex-center" style="display: none">
+        <div class="menu-content">
+          <h1 class="game-title">
+            <span class="title-main">RARE ANGON</span>
+            <span class="title-sub">THE SKY RUNNER</span>
+          </h1>
+          
+          <div class="stats-bar">
+            <div id="user-profile" class="stat-pill" style="display: none;">
+              <span class="icon">👤</span>
+              <span id="user-name">Guest</span>
+            </div>
+            
+            <div class="stat-pill gold">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <span id="menu-coins">0</span>
+            </div>
+          </div>
+          
+          <div class="menu-grid">
+            <button id="btn-start" class="btn-retro primary btn-lg">
+              <span>▶️ TERBANG</span>
+            </button>
+            
+            <div class="btn-row">
+              <button id="btn-shop" class="btn-retro secondary">
+                <span>🛒 WARUNG</span>
+              </button>
+              <button id="btn-leaderboard" class="btn-retro secondary">
+                <span>🏆 SKOR</span>
+              </button>
+            </div>
+            
+            <button id="btn-account" class="btn-retro tertiary">
+              <span id="btn-account-text">👤 MASUK</span>
+            </button>
+          </div>
+
+          <div class="hint-box">
+            <p>🎮 KONTROL TANGAN</p>
+            <div class="gestures">
+              <div class="gesture-item"><span>☝️</span><small>KIRI</small></div>
+              <div class="gesture-item"><span>✊</span><small>TENGAH</small></div>
+              <div class="gesture-item"><span>✌️</span><small>KANAN</small></div>
+            </div>
+          </div>
         </div>
-        <div id="shop-items" class="shop-grid">
-          <!-- Items injected by JS -->
-        </div>
-        <button id="btn-shop-back" class="btn-pixel secondary">KEMBALI</button>
       </div>
 
-      <!-- UI: Game Over -->
-      <div id="screen-gameover" class="overlay-screen" style="display: none">
-        <h1 style="color: #d32f2f">YAH! MEGAT!</h1>
-        <div class="stats-box">
-          <p>SKOR AKHIR: <span id="go-score" style="color: #fff">0</span></p>
-          <p>HIGH SCORE: <span id="go-high" style="color: #ffd700">0</span></p>
-          <p>KOIN DAPAT: <span id="go-coin" style="color: #ffd700">0</span></p>
+      <!-- Shop Screen -->
+      <div id="screen-shop" class="overlay-screen flex-center" style="display: none">
+        <div class="panel shop-panel">
+          <div class="panel-header">
+            <h2>🏪 WARUNG LAYANGAN</h2>
+            <div class="stat-pill gold">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <span id="shop-coins">0</span>
+            </div>
+          </div>
+          
+          <div id="shop-items" class="shop-grid-items">
+            <!-- Items injected by JS -->
+          </div>
+          
+          <button id="btn-shop-back" class="btn-retro secondary btn-wide">
+            ◀️ KEMBALI
+          </button>
         </div>
-        <button id="btn-restart" class="btn-pixel">MAIN LAGI</button>
-        <button id="btn-menu" class="btn-pixel secondary">MENU UTAMA</button>
       </div>
 
-      <!-- Layer Webcam & Debug -->
+      <!-- Game Over Screen -->
+      <div id="screen-gameover" class="overlay-screen flex-center" style="display: none">
+        <div class="panel gameover-panel">
+          <h1 class="danger-text blink">💥 MEGAT!</h1>
+          
+          <div class="results-grid">
+            <div class="result-item">
+              <span class="label">SKOR</span>
+              <span id="go-score" class="value">0</span>
+            </div>
+            <div class="result-item">
+              <span class="label">TERBAIK</span>
+              <span id="go-high" class="value highlight">0</span>
+            </div>
+            <div class="result-item">
+              <span class="label">KOIN</span>
+              <div class="coin-val">
+                <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+                <span id="go-coin">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button id="btn-restart" class="btn-retro primary btn-wide">
+              🔄 MAIN LAGI
+            </button>
+            <button id="btn-menu" class="btn-retro secondary btn-wide">
+              🏠 MENU
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Screen -->
+      <div id="screen-account" class="overlay-screen flex-center" style="display: none">
+        <div class="panel account-panel-wrapper">
+          <!-- Not Logged In -->
+          <div id="account-login" class="account-content">
+            <h2>🔐 MASUK AKUN</h2>
+            <p class="info-text">
+              Simpan progres, akses leaderboard global, dan sinkronisasi data!
+            </p>
+            
+            <button id="btn-google-login" class="btn-retro google-btn">
+              <span class="icon">G</span> MASUK DENGAN GOOGLE
+            </button>
+            
+            <button id="btn-account-back" class="btn-retro secondary btn-wide">
+              ◀️ KEMBALI
+            </button>
+          </div>
+          
+          <!-- Logged In -->
+          <div id="account-profile" class="account-content" style="display: none;">
+            <h2>👤 PROFIL PEMAIN</h2>
+            
+            <div class="profile-card">
+              <div class="profile-field">
+                <label>NAMA</label>
+                <div class="input-group">
+                  <input type="text" id="profile-username-input" maxlength="15" />
+                  <button id="btn-save-username" class="btn-icon">💾</button>
+                </div>
+              </div>
+              
+              <div class="profile-stats-row">
+                <div class="stat-box">
+                  <label>KOIN</label>
+                  <span id="profile-coins" class="gold-text">0</span>
+                </div>
+                <div class="stat-box">
+                  <label>TERBAIK</label>
+                  <span id="profile-best">0</span>
+                </div>
+              </div>
+              
+              <div class="profile-field">
+                <label>EMAIL</label>
+                <span id="profile-email" class="email-text">-</span>
+              </div>
+            </div>
+            
+            <div class="profile-actions">
+              <button id="btn-sync-data" class="btn-retro primary">
+                🔄 SINKRON
+              </button>
+              <button id="btn-logout" class="btn-retro danger">
+                🚪 KELUAR
+              </button>
+            </div>
+            
+            <button id="btn-profile-back" class="btn-retro secondary btn-wide">
+              ◀️ KEMBALI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard Screen -->
+      <div id="screen-leaderboard" class="overlay-screen flex-center" style="display: none">
+        <div class="panel leaderboard-panel">
+          <h2>🏆 PAPAN SKOR</h2>
+          
+          <div class="tab-container">
+            <button class="tab-btn active" data-tab="global">🌍 GLOBAL</button>
+            <button class="tab-btn" data-tab="personal">👤 SAYA</button>
+          </div>
+          
+          <div class="leaderboard-scroll">
+            <div id="leaderboard-content" class="leaderboard-list">
+              <div class="loading-spinner">⏳ Memuat...</div>
+            </div>
+          </div>
+          
+          <button id="btn-leaderboard-back" class="btn-retro secondary btn-wide">
+            ◀️ KEMBALI
+          </button>
+        </div>
+      </div>
+
+      <!-- Webcam Container -->
       <div class="webcam-container">
         <div class="rec-badge">AI CAM</div>
         <video id="webcam" playsinline></video>
@@ -84,11 +257,12 @@
 
     <!-- Mobile Controls -->
     <div id="mobile-controls">
-      <div class="d-pad">
-        <div class="d-btn left"></div>
-        <div class="d-btn right"></div>
+      <div class="d-btn left" aria-label="Kiri">
+        <img src="assets/images/ui_arrow.png" alt="<">
       </div>
-      <div class="action-btn">A</div>
+      <div class="d-btn right" aria-label="Kanan">
+        <img src="assets/images/ui_arrow.png" alt=">">
+      </div>
     </div>
   </body>
 </html>

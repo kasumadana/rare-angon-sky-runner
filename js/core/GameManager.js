@@ -11,6 +11,7 @@ import { InputHandler } from "./InputHandler.js";
 import { UIManager } from "../ui/UIManager.js";
 import { AssetLoader } from "./AssetLoader.js";
 import { Storage } from "../utils/Storage.js";
+import { ObjectPool } from "../utils/ObjectPool.js";
 
 export class GameManager {
   constructor() {
@@ -25,8 +26,10 @@ export class GameManager {
     this.coinsCollected = 0;
 
     this.player = null;
-    this.obstacles = [];
-    this.coins = [];
+    
+    // Object Pools
+    this.obstaclePool = new ObjectPool(Obstacle, 50);
+    this.coinPool = new ObjectPool(Coin, 30);
 
     this.gameSpeed = CONFIG.BASE_SPEED;
     this.timers = { spawn: 0, coinSpawn: 0 };
@@ -36,6 +39,7 @@ export class GameManager {
     this.inputHandler = new InputHandler(this);
 
     this.loop = this.loop.bind(this);
+    this.lastTime = 0;
   }
 
   async init() {
@@ -45,8 +49,15 @@ export class GameManager {
     this.uiManager.showLoading(true);
 
     // Load Assets & AI
-    await this.assetLoader.loadAll();
-    await this.inputHandler.init();
+    try {
+      await Promise.all([
+        this.assetLoader.loadAll(),
+        this.inputHandler.init()
+      ]);
+      console.log("✅ Initialization complete");
+    } catch (e) {
+      console.error("❌ Initialization failed:", e);
+    }
 
     this.uiManager.showLoading(false);
     this.changeState(GAME_STATE.MENU);
@@ -65,11 +76,15 @@ export class GameManager {
   }
 
   changeState(newState) {
+    console.log(`State change: ${this.currentState} -> ${newState}`);
     this.currentState = newState;
     this.uiManager.updateUIState(newState);
 
     if (newState === GAME_STATE.PLAYING) {
       this.resetGame();
+      this.inputHandler.startDetection();
+    } else {
+      this.inputHandler.stopDetection();
     }
   }
 
@@ -77,10 +92,24 @@ export class GameManager {
     this.score = 0;
     this.coinsCollected = 0;
     this.gameSpeed = CONFIG.BASE_SPEED;
-    this.obstacles = [];
-    this.coins = [];
-    this.player = new Player();
+    
+    this.obstaclePool.releaseAll();
+    this.coinPool.releaseAll();
+    
+    const selectedSkin = Storage.getSelectedItem();
+    this.player = new Player(selectedSkin);
     this.timers = { spawn: 0, coinSpawn: 0 };
+    
+    console.log("Game Reset. Player created:", this.player);
+  }
+
+  playSFX(key) {
+    const sound = this.assetLoader.getSound(key);
+    if (sound) {
+      const clone = sound.cloneNode(true);
+      clone.volume = 0.5;
+      clone.play().catch(e => {});
+    }
   }
 
   loop(timestamp) {
@@ -88,7 +117,9 @@ export class GameManager {
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
-    this.update(dt);
+    const safeDt = Math.min(dt, 0.1);
+
+    this.update(safeDt);
     this.draw();
 
     requestAnimationFrame(this.loop);
@@ -97,89 +128,105 @@ export class GameManager {
   update(dt) {
     if (this.currentState !== GAME_STATE.PLAYING) return;
 
-    // 1. Difficulty Scaling
-    this.gameSpeed += dt * 2;
+    // Difficulty
+    this.gameSpeed += dt * 5;
     this.score += this.gameSpeed * dt * 0.05;
 
-    // 2. Player
-    this.player.update(dt);
+    // Player
+    if (this.player) this.player.update(dt);
 
-    // 3. Spawners
+    // Spawners
     this.timers.spawn += dt;
-    if (
-      this.timers.spawn >
-      CONFIG.SPAWN_RATE * (CONFIG.BASE_SPEED / this.gameSpeed)
-    ) {
+    const currentSpawnRate = Math.max(0.5, CONFIG.SPAWN_RATE * (CONFIG.BASE_SPEED / this.gameSpeed));
+    
+    if (this.timers.spawn > currentSpawnRate) {
       this.timers.spawn = 0;
       const lane = Math.floor(Math.random() * 3);
-      const type =
-        Math.random() > 0.7 ? OBSTACLE_TYPE.DRONE : OBSTACLE_TYPE.BIRD;
-      this.obstacles.push(new Obstacle(lane, this.gameSpeed, type));
+      const type = Math.random() > 0.7 ? OBSTACLE_TYPE.DRONE : OBSTACLE_TYPE.BIRD;
+      this.obstaclePool.acquire(lane, this.gameSpeed, type);
     }
 
     this.timers.coinSpawn += dt;
-    if (this.timers.coinSpawn > 2.5) {
+    if (this.timers.coinSpawn > 2.0) {
       this.timers.coinSpawn = 0;
       const lane = Math.floor(Math.random() * 3);
-      this.coins.push(new Coin(lane, this.gameSpeed));
+      this.coinPool.acquire(lane, this.gameSpeed);
     }
 
-    // 4. Update Objects
-    this.obstacles.forEach((obs, i) => {
-      obs.update(dt);
-      if (obs.checkCollision(this.player)) {
-        this.handleGameOver();
+    // Updates
+    this.obstaclePool.updateAll(dt);
+    this.coinPool.updateAll(dt);
+    
+    // Collisions
+    if (this.player) {
+      for (const obs of this.obstaclePool.getActive()) {
+        if (obs.checkCollision(this.player)) {
+          this.playSFX('HIT');
+          this.handleGameOver();
+          break;
+        }
       }
-      if (obs.markedForDeletion) this.obstacles.splice(i, 1);
-    });
-
-    this.coins.forEach((coin, i) => {
-      coin.update(dt);
-      if (coin.checkCollision(this.player)) {
-        this.coinsCollected++;
-        Storage.addCoins(1);
-        this.coins.splice(i, 1);
-      } else if (coin.markedForDeletion) {
-        this.coins.splice(i, 1);
+      
+      for (const coin of this.coinPool.getActive()) {
+        if (coin.checkCollision(this.player)) {
+          this.coinsCollected++;
+          Storage.addCoins(1);
+          this.playSFX('COIN');
+          this.coinPool.release(coin);
+        }
       }
-    });
+    }
 
     this.uiManager.updateHUD(Math.floor(this.score), this.coinsCollected);
   }
 
-  handleGameOver() {
+  async handleGameOver() {
     const highScore = Storage.getHighScore();
+    const finalScore = Math.floor(this.score);
+    
     if (this.score > highScore) {
-      Storage.setHighScore(Math.floor(this.score));
+      Storage.setHighScore(finalScore);
     }
+    
+    if (this.uiManager.accountManager && this.uiManager.accountManager.isLoggedIn) {
+      try {
+        await this.uiManager.accountManager._syncToCloud();
+      } catch (e) {
+        console.error('Auto-sync failed:', e);
+      }
+    }
+    
+    this.inputHandler.stopDetection();
     this.changeState(GAME_STATE.GAMEOVER);
   }
 
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // -- BACKGROUND BARU: Langit Biru Cerah (Clean) --
+    // Background
     const grad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    grad.addColorStop(0, PALETTE.SKY_TOP); // Biru Langit (Atas)
-    grad.addColorStop(1, PALETTE.SKY_BOTTOM); // Biru Pucat (Bawah)
+    grad.addColorStop(0, PALETTE.SKY_TOP);
+    grad.addColorStop(1, PALETTE.SKY_BOTTOM);
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Clouds
+    const cloudSmall = this.assetLoader.getImage("CLOUD_SMALL");
+    const cloudBig = this.assetLoader.getImage("CLOUD_BIG");
+    
+    if (cloudSmall) {
+      this.ctx.drawImage(cloudSmall, 100, 100, 100, 60);
+      this.ctx.drawImage(cloudSmall, 600, 200, 120, 70);
+    }
+    if (cloudBig) {
+      this.ctx.drawImage(cloudBig, 300, 50, 200, 100);
+    }
 
-    // PENGHAPUSAN GARIS JALUR (CLEAN LOOK)
-    // Kode forEach menggambar garis telah dihapus sesuai permintaan.
-    // Sekarang hanya langit bersih.
-
-    // -- Game Objects Layer --
-    if (
-      this.currentState === GAME_STATE.PLAYING ||
-      this.currentState === GAME_STATE.GAMEOVER
-    ) {
-      // Gambar awan tipis dekoratif (Opsional untuk estetika simple)
-      // Bisa ditambahkan nanti jika ingin variasi, tapi sekarang clean dulu.
-
-      this.coins.forEach((c) => c.draw(this.ctx));
-      this.obstacles.forEach((o) => o.draw(this.ctx));
-      this.player.draw(this.ctx);
+    // Game Objects
+    if (this.currentState === GAME_STATE.PLAYING || this.currentState === GAME_STATE.GAMEOVER) {
+      this.coinPool.drawAll(this.ctx);
+      this.obstaclePool.drawAll(this.ctx);
+      if (this.player) this.player.draw(this.ctx);
     }
   }
 }

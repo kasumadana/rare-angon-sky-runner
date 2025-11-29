@@ -1,26 +1,31 @@
-import { CONFIG, LANES, PALETTE } from "../utils/Constants.js";
+import { CONFIG, LANES, PALETTE, SPRITES } from "../utils/Constants.js";
+import { GameManager } from "../core/GameManager.js";
 
 export class Player {
-  constructor() {
+  constructor(skinId) {
     this.currentLane = LANES.CENTER;
-    this.targetX = this.getLaneCenterX(this.currentLane);
-    this.x = this.targetX;
-    this.y = CONFIG.CANVAS_HEIGHT - 150;
-
-    this.width = 50;
-    this.height = 70;
+    this.width = SPRITES.PLAYER.WIDTH;
+    this.height = SPRITES.PLAYER.HEIGHT;
+    this.skinId = skinId || "bebean_std";
+    
+    // Position
+    this.x = 0;
+    this.y = 0;
+    this.targetX = 0;
+    this.needsPositionInit = true;
+    
+    // Animation/Movement
     this.tailWiggle = 0;
   }
 
   getLaneCenterX(laneIndex) {
-    const centerScreen = CONFIG.CANVAS_WIDTH / 2;
+    const canvas = document.getElementById('gameCanvas');
+    const centerScreen = (canvas?.width || 800) / 2;
     const laneOffset = (laneIndex - 1) * CONFIG.LANE_WIDTH;
     return centerScreen + laneOffset;
   }
 
   moveLane(direction) {
-    // -1 (Left), 0 (Center), 1 (Right) logic handled by manager
-    // Logic absolute lane
     if (direction === -1) this.currentLane = LANES.LEFT;
     else if (direction === 1) this.currentLane = LANES.RIGHT;
     else this.currentLane = LANES.CENTER;
@@ -34,6 +39,7 @@ export class Player {
       this.targetX = this.getLaneCenterX(this.currentLane);
     }
   }
+  
   moveRight() {
     if (this.currentLane < 2) {
       this.currentLane++;
@@ -42,11 +48,20 @@ export class Player {
   }
 
   update(dt) {
-    // LERP movement
-    const lerpSpeed = 8;
+    // Init position
+    if (this.needsPositionInit) {
+      const canvas = document.getElementById('gameCanvas');
+      this.y = (canvas?.height || 600) - 150;
+      this.targetX = this.getLaneCenterX(this.currentLane);
+      this.x = this.targetX;
+      this.needsPositionInit = false;
+    }
+
+    // Smooth movement
+    const lerpSpeed = 10;
     this.x += (this.targetX - this.x) * lerpSpeed * dt;
 
-    // Animasi Ekor
+    // Tail animation
     this.tailWiggle += dt * 10;
   }
 
@@ -54,38 +69,43 @@ export class Player {
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    // 1. Gambar Ekor (Pita)
-    ctx.beginPath();
-    ctx.moveTo(0, this.height / 2);
-    // Kurva sinus untuk efek tertiup angin
-    for (let i = 0; i < 60; i += 5) {
-      const wiggle = Math.sin(this.tailWiggle + i * 0.1) * 10;
-      ctx.lineTo(wiggle, this.height / 2 + i);
-    }
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    // Determine asset key based on skinId
+    let assetKey = "SKIN_BEBEAN";
+    if (this.skinId === "pecukan_agile") assetKey = "SKIN_PECUKAN";
+    if (this.skinId === "janggan_legend") assetKey = "SKIN_KUWIR";
 
-    // 2. Gambar Layangan (Diamond/Bebean Style)
+    const img = GameManager.instance.assetLoader.getImage(assetKey);
+
+    if (img) {
+      // Draw Sprite
+      ctx.drawImage(
+        img, 
+        -this.width / 2, 
+        -this.height / 2, 
+        this.width, 
+        this.height
+      );
+    } else {
+      // Fallback Rendering (Shape)
+      this.drawFallback(ctx);
+    }
+
+    ctx.restore();
+  }
+
+  drawFallback(ctx) {
+    // Simple Kite Shape
     ctx.beginPath();
-    ctx.moveTo(0, -this.height / 2); // Top
-    ctx.lineTo(this.width / 2, 0); // Right
-    ctx.lineTo(0, this.height / 2); // Bottom
-    ctx.lineTo(-this.width / 2, 0); // Left
+    ctx.moveTo(0, -this.height / 2);
+    ctx.lineTo(this.width / 2, 0);
+    ctx.lineTo(0, this.height / 2);
+    ctx.lineTo(-this.width / 2, 0);
     ctx.closePath();
 
     ctx.fillStyle = PALETTE.BATA;
     ctx.fill();
-    ctx.strokeStyle = PALETTE.EMAS;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#FFF";
+    ctx.lineWidth = 2;
     ctx.stroke();
-
-    // Tulang tengah
-    ctx.beginPath();
-    ctx.moveTo(0, -this.height / 2);
-    ctx.lineTo(0, this.height / 2);
-    ctx.stroke();
-
-    ctx.restore();
   }
 }

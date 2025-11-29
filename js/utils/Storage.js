@@ -1,3 +1,5 @@
+import { supabaseService } from '../services/SupabaseService.js';
+
 export class Storage {
   static getHighScore() {
     return parseInt(localStorage.getItem("ra_highscore")) || 0;
@@ -14,6 +16,27 @@ export class Storage {
   static addCoins(amount) {
     const current = this.getCoins();
     localStorage.setItem("ra_coins", current + amount);
+  }
+
+  static getOwnedItems() {
+    const items = localStorage.getItem("ra_owned_items");
+    return items ? JSON.parse(items) : ["bebean_std"];
+  }
+
+  static saveOwnedItem(itemId) {
+    const items = this.getOwnedItems();
+    if (!items.includes(itemId)) {
+      items.push(itemId);
+      localStorage.setItem("ra_owned_items", JSON.stringify(items));
+    }
+  }
+
+  static getSelectedItem() {
+    return localStorage.getItem("ra_selected_item") || "bebean_std";
+  }
+
+  static setSelectedItem(itemId) {
+    localStorage.setItem("ra_selected_item", itemId);
   }
 
   static spendCoins(amount) {
