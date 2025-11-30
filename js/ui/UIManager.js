@@ -2,6 +2,7 @@ import { GAME_STATE, SHOP_ITEMS, ASSETS } from "../utils/Constants.js";
 import { Storage } from "../utils/Storage.js";
 import { AccountManager } from "../managers/AccountManager.js";
 import { GameManager } from "../core/GameManager.js";
+import { supabaseService } from "../services/SupabaseService.js";
 
 export class UIManager {
   constructor(gameManager) {
@@ -23,6 +24,9 @@ export class UIManager {
 
     // Account Manager
     this.accountManager = new AccountManager(this);
+    
+    // Mobile Check
+    this.isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     this._bindEvents();
   }
@@ -51,7 +55,17 @@ export class UIManager {
       this._openAccount();
     };
 
-    // Shop
+    // Shop Navigation
+    document.getElementById("btn-shop-prev").onclick = () => {
+      this.gm.playSFX('SELECT');
+      this._navigateShop(-1);
+    };
+    
+    document.getElementById("btn-shop-next").onclick = () => {
+      this.gm.playSFX('SELECT');
+      this._navigateShop(1);
+    };
+
     document.getElementById("btn-shop-back").onclick = () => {
       this.gm.playSFX('SELECT');
       this.gm.changeState(GAME_STATE.MENU);
@@ -139,6 +153,26 @@ export class UIManager {
       hud.style.display = (state === GAME_STATE.PLAYING) ? "block" : "none";
     }
     
+    // Toggle Webcam & Mobile Controls
+    const webcamContainer = document.querySelector('.webcam-container');
+    const mobileControls = document.getElementById('mobile-controls');
+    
+    if (state === GAME_STATE.PLAYING) {
+      // WEBCAM: Only show if NOT mobile
+      if (webcamContainer) {
+        webcamContainer.style.display = this.isMobile ? 'none' : 'block';
+      }
+      
+      // CONTROLS: Only show if mobile
+      if (mobileControls) {
+        mobileControls.style.display = this.isMobile ? 'flex' : 'none';
+      }
+    } else {
+      // Hide both in menu/other screens
+      if (webcamContainer) webcamContainer.style.display = 'none';
+      if (mobileControls) mobileControls.style.display = 'none';
+    }
+    
     // Show specific screen
     switch (state) {
       case GAME_STATE.LOADING:
@@ -150,6 +184,7 @@ export class UIManager {
         break;
       case GAME_STATE.SHOP:
         this.screens.shop.style.display = "flex";
+        this.currentShopIndex = 0; // Reset to first item
         this._renderShop();
         break;
       case GAME_STATE.GAMEOVER:
@@ -199,79 +234,91 @@ export class UIManager {
 
   _openShop() {
     this.screens.shop.style.display = "flex";
+    this.currentShopIndex = 0;
+    this._renderShop();
+  }
+
+  _navigateShop(direction) {
+    this.currentShopIndex += direction;
+    if (this.currentShopIndex < 0) this.currentShopIndex = SHOP_ITEMS.length - 1;
+    if (this.currentShopIndex >= SHOP_ITEMS.length) this.currentShopIndex = 0;
     this._renderShop();
   }
 
   _renderShop() {
-    const container = document.getElementById("shop-items");
+    const container = document.getElementById("shop-item-display");
     const shopCoins = document.getElementById("shop-coins");
     shopCoins.innerText = Storage.getCoins();
 
-    container.innerHTML = "";
-    
-    SHOP_ITEMS.forEach((item) => {
-      const div = document.createElement("div");
-      div.className = "shop-item";
+    const item = SHOP_ITEMS[this.currentShopIndex];
+    const isOwned = Storage.isItemOwned(item.id);
+    const isSelected = Storage.getSelectedItem() === item.id;
+    const canBuy = Storage.getCoins() >= item.cost;
 
-      const isOwned = Storage.isItemOwned(item.id);
-      const isSelected = Storage.getSelectedItem() === item.id;
-      const canBuy = Storage.getCoins() >= item.cost;
+    let btnText = "";
+    let btnClass = "btn-retro";
+    let btnDisabled = false;
 
-      let btnText = "";
-      let btnClass = "btn-retro";
-      let btnDisabled = false;
-
-      if (isSelected) {
-        btnText = "✅ TERPASANG";
+    if (isSelected) {
+      btnText = "TERPASANG"; // Removed checkmark
+      btnClass = "btn-retro secondary";
+      btnDisabled = true;
+    } else if (isOwned) {
+      btnText = "PAKAI";
+      btnClass = "btn-retro primary";
+    } else {
+      btnText = `BELI (${item.cost})`;
+      if (!canBuy) {
         btnClass = "btn-retro secondary";
         btnDisabled = true;
-      } else if (isOwned) {
-        btnText = "PAKAI";
-        btnClass = "btn-retro primary";
       } else {
-        btnText = `BELI (${item.cost})`;
-        if (!canBuy) {
-          btnClass = "btn-retro secondary";
-          btnDisabled = true;
-        } else {
-          btnClass = "btn-retro primary";
-        }
+        btnClass = "btn-retro primary";
       }
+    }
 
-      // FIX: Use direct path from ASSETS instead of relying on loaded image object
-      const imgSrc = ASSETS.IMAGES[item.imageKey] || "assets/images/kite_bebean.png";
+    const imgSrc = ASSETS.IMAGES[item.imageKey] || "assets/images/kite_bebean.png";
 
-      div.innerHTML = `
-        <div class="shop-item-icon">
-          <img src="${imgSrc}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: contain;">
-        </div>
-        <span style="font-weight: bold; font-size: 10px; margin: 5px 0;">${item.name}</span>
-        <span style="font-size: 8px; color: #666; margin-bottom: 10px;">${item.description}</span>
-        <button class="${btnClass}" style="width: 100%; padding: 8px;">${btnText}</button>
-      `;
+    container.innerHTML = `
+      <img src="${imgSrc}" alt="${item.name}">
+      <h3>${item.name}</h3>
+      <p>${item.description}</p>
+      <button id="btn-shop-action" class="${btnClass}" style="width: 100%; padding: 12px;">${btnText}</button>
+    `;
 
-      const btn = div.querySelector("button");
-      if (btnDisabled) btn.disabled = true;
+    const btn = document.getElementById("btn-shop-action");
+    if (btnDisabled) btn.disabled = true;
 
-      btn.onclick = () => {
-        if (isOwned) {
-          this.gm.playSFX('SELECT');
+    btn.onclick = async () => {
+      if (isOwned) {
+        this.gm.playSFX('SELECT');
+        Storage.setSelectedItem(item.id);
+        
+        if (this.accountManager.isLoggedIn) {
+          await supabaseService.equipItem(item.id);
+        }
+        
+        this._renderShop();
+      } else {
+        if (Storage.spendCoins(item.cost)) {
+          this.gm.playSFX('BUY');
+          Storage.saveOwnedItem(item.id);
           Storage.setSelectedItem(item.id);
+          
+          if (this.accountManager.isLoggedIn) {
+             try {
+               await supabaseService.purchaseItem(item.id, item.cost);
+               await supabaseService.equipItem(item.id);
+             } catch (e) {
+               console.error("Cloud purchase failed:", e);
+             }
+          }
+          
           this._renderShop();
         } else {
-          if (Storage.spendCoins(item.cost)) {
-            this.gm.playSFX('BUY');
-            Storage.saveOwnedItem(item.id);
-            Storage.setSelectedItem(item.id);
-            this._renderShop();
-          } else {
-            alert("Koin tidak cukup!");
-          }
+          alert("Koin tidak cukup!");
         }
-      };
-
-      container.appendChild(div);
-    });
+      }
+    };
   }
 
   _openAccount() {
@@ -286,7 +333,7 @@ export class UIManager {
 
   async _loadLeaderboardData(type) {
     const container = document.getElementById('leaderboard-content');
-    container.innerHTML = '<div class="loading-spinner">⏳ Memuat...</div>';
+    container.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
 
     const entries = await this.accountManager.loadLeaderboard(type);
     this.accountManager.renderLeaderboard(entries, container);

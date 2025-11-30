@@ -206,8 +206,8 @@ class SupabaseService {
       limit_count: limit
     });
 
-    // Fallback if RPC doesn't exist - use manual grouping
-    if (error && error.code === '42883') {
+    // Fallback if RPC doesn't exist (PGRST202) or undefined function (42883)
+    if (error && (error.code === '42883' || error.code === 'PGRST202')) {
       console.warn('RPC function not found, using fallback query');
       const { data: allScores, error: fetchError } = await this.supabase
         .from('leaderboards')
@@ -289,7 +289,7 @@ class SupabaseService {
     const { profile, error: profileError } = await this.getProfile();
     if (profileError) return { item: null, error: profileError };
 
-    if (profile.total_coins < cost) {
+    if ((profile.total_coins || 0) < cost) {
       return { item: null, error: new Error('Insufficient coins') };
     }
 

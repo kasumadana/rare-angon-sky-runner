@@ -13,6 +13,10 @@ export class Storage {
     return parseInt(localStorage.getItem("ra_coins")) || 0;
   }
 
+  static setCoins(amount) {
+    localStorage.setItem("ra_coins", amount);
+  }
+
   static addCoins(amount) {
     const current = this.getCoins();
     localStorage.setItem("ra_coins", current + amount);
@@ -21,6 +25,11 @@ export class Storage {
   static getOwnedItems() {
     const items = localStorage.getItem("ra_owned_items");
     return items ? JSON.parse(items) : ["bebean_std"];
+  }
+
+  static isItemOwned(itemId) {
+    const items = this.getOwnedItems();
+    return items.includes(itemId);
   }
 
   static saveOwnedItem(itemId) {

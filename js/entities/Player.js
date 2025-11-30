@@ -1,111 +1,98 @@
-import { CONFIG, LANES, PALETTE, SPRITES } from "../utils/Constants.js";
+import { CONFIG, LANES, SPRITES } from "../utils/Constants.js";
 import { GameManager } from "../core/GameManager.js";
 
 export class Player {
-  constructor(skinId) {
-    this.currentLane = LANES.CENTER;
+  constructor(skinId = "bebean_std") {
     this.width = SPRITES.PLAYER.WIDTH;
     this.height = SPRITES.PLAYER.HEIGHT;
-    this.skinId = skinId || "bebean_std";
     
-    // Position
-    this.x = 0;
-    this.y = 0;
-    this.targetX = 0;
-    this.needsPositionInit = true;
-    
-    // Animation/Movement
-    this.tailWiggle = 0;
-  }
-
-  getLaneCenterX(laneIndex) {
+    // FIX: Use dynamic canvas width if available, else fallback to CONFIG
     const canvas = document.getElementById('gameCanvas');
-    const centerScreen = (canvas?.width || 800) / 2;
-    const laneOffset = (laneIndex - 1) * CONFIG.LANE_WIDTH;
-    return centerScreen + laneOffset;
+    const canvasWidth = canvas ? canvas.width : CONFIG.CANVAS_WIDTH;
+    
+    this.x = canvasWidth / 2;
+    this.y = CONFIG.CANVAS_HEIGHT - 150;
+    
+    this.currentLane = LANES.CENTER;
+    this.targetX = this.x;
+    
+    this.skinId = skinId;
+    this.skinKey = this._getSkinKey(skinId);
   }
 
-  moveLane(direction) {
-    if (direction === -1) this.currentLane = LANES.LEFT;
-    else if (direction === 1) this.currentLane = LANES.RIGHT;
-    else this.currentLane = LANES.CENTER;
-
-    this.targetX = this.getLaneCenterX(this.currentLane);
-  }
-
-  moveLeft() {
-    if (this.currentLane > 0) {
-      this.currentLane--;
-      this.targetX = this.getLaneCenterX(this.currentLane);
-    }
-  }
-  
-  moveRight() {
-    if (this.currentLane < 2) {
-      this.currentLane++;
-      this.targetX = this.getLaneCenterX(this.currentLane);
+  _getSkinKey(id) {
+    switch(id) {
+      case 'pecukan_agile': return 'SKIN_PECUKAN';
+      case 'janggan_legend': return 'SKIN_KUWIR';
+      default: return 'SKIN_BEBEAN';
     }
   }
 
   update(dt) {
-    // Init position
-    if (this.needsPositionInit) {
-      const canvas = document.getElementById('gameCanvas');
-      this.y = (canvas?.height || 600) - 150;
-      this.targetX = this.getLaneCenterX(this.currentLane);
-      this.x = this.targetX;
-      this.needsPositionInit = false;
-    }
-
     // Smooth movement
-    const lerpSpeed = 10;
-    this.x += (this.targetX - this.x) * lerpSpeed * dt;
-
-    // Tail animation
-    this.tailWiggle += dt * 10;
+    const speed = 15 * dt;
+    this.x += (this.targetX - this.x) * speed;
+    
+    // Bobbing animation
+    this.y = (CONFIG.CANVAS_HEIGHT - 150) + Math.sin(Date.now() / 200) * 5;
   }
 
   draw(ctx) {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-
-    // Determine asset key based on skinId
-    let assetKey = "SKIN_BEBEAN";
-    if (this.skinId === "pecukan_agile") assetKey = "SKIN_PECUKAN";
-    if (this.skinId === "janggan_legend") assetKey = "SKIN_KUWIR";
-
-    const img = GameManager.instance.assetLoader.getImage(assetKey);
-
+    const assetLoader = GameManager.instance.assetLoader;
+    const img = assetLoader.getImage(this.skinKey);
+    
     if (img) {
-      // Draw Sprite
       ctx.drawImage(
         img, 
-        -this.width / 2, 
-        -this.height / 2, 
+        this.x - this.width / 2, 
+        this.y - this.height / 2, 
         this.width, 
         this.height
       );
     } else {
-      // Fallback Rendering (Shape)
-      this.drawFallback(ctx);
+      // Fallback
+      ctx.fillStyle = "red";
+      ctx.fillRect(
+        this.x - this.width / 2, 
+        this.y - this.height / 2, 
+        this.width, 
+        this.height
+      );
     }
-
-    ctx.restore();
   }
 
-  drawFallback(ctx) {
-    // Simple Kite Shape
-    ctx.beginPath();
-    ctx.moveTo(0, -this.height / 2);
-    ctx.lineTo(this.width / 2, 0);
-    ctx.lineTo(0, this.height / 2);
-    ctx.lineTo(-this.width / 2, 0);
-    ctx.closePath();
+  moveLeft() {
+    if (this.currentLane > LANES.LEFT) {
+      this.moveLane(-1);
+    }
+  }
 
-    ctx.fillStyle = PALETTE.BATA;
-    ctx.fill();
-    ctx.strokeStyle = "#FFF";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  moveRight() {
+    if (this.currentLane < LANES.RIGHT) {
+      this.moveLane(1);
+    }
+  }
+
+  moveLane(direction) {
+    // direction: -1 (left), 0 (center/stay), 1 (right)
+    if (direction === 0) return;
+    
+    const newLane = this.currentLane + direction;
+    if (newLane >= LANES.LEFT && newLane <= LANES.RIGHT) {
+      this.currentLane = newLane;
+      this._updateTargetX();
+      GameManager.instance.playSFX('WHOOSH');
+    }
+  }
+
+  _updateTargetX() {
+    // FIX: Always get current canvas width for responsiveness
+    const canvas = document.getElementById('gameCanvas');
+    const center = (canvas ? canvas.width : CONFIG.CANVAS_WIDTH) / 2;
+    const offset = CONFIG.LANE_WIDTH; 
+    
+    if (this.currentLane === LANES.LEFT) this.targetX = center - offset;
+    else if (this.currentLane === LANES.CENTER) this.targetX = center;
+    else if (this.currentLane === LANES.RIGHT) this.targetX = center + offset;
   }
 }

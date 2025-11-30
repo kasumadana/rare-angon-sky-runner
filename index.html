@@ -3,10 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Content Security Policy: Allow unsafe-eval for TensorFlow.js -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;">
+    
     <title>Rare Angon: The Sky Runner</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/item_coin.png">
     
     <!-- Pixel Font -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -49,7 +59,7 @@
       <!-- Loading Screen -->
       <div id="screen-loading" class="overlay-screen flex-center">
         <div class="panel loading-panel">
-          <h2 class="blink">⏳ MEMUAT...</h2>
+          <h2 class="blink"><i class="fas fa-hourglass-half"></i> MEMUAT...</h2>
           <p class="subtitle">Menyiapkan Mantra AI</p>
           <div class="loading-bar"><div class="loading-progress"></div></div>
         </div>
@@ -58,14 +68,13 @@
       <!-- Main Menu -->
       <div id="screen-menu" class="overlay-screen flex-center" style="display: none">
         <div class="menu-content">
-          <h1 class="game-title">
-            <span class="title-main">RARE ANGON</span>
-            <span class="title-sub">THE SKY RUNNER</span>
-          </h1>
+          <div class="logo-container">
+            <img src="assets/images/logo.png" alt="Rare Angon Logo" class="game-logo">
+          </div>
           
           <div class="stats-bar">
             <div id="user-profile" class="stat-pill" style="display: none;">
-              <span class="icon">👤</span>
+              <span class="icon"><i class="fas fa-user"></i></span>
               <span id="user-name">Guest</span>
             </div>
             
@@ -77,29 +86,29 @@
           
           <div class="menu-grid">
             <button id="btn-start" class="btn-retro primary btn-lg">
-              <span>▶️ TERBANG</span>
+              <span><i class="fas fa-play"></i> TERBANG</span>
             </button>
             
             <div class="btn-row">
               <button id="btn-shop" class="btn-retro secondary">
-                <span>🛒 WARUNG</span>
+                <span><i class="fas fa-shopping-cart"></i> WARUNG</span>
               </button>
               <button id="btn-leaderboard" class="btn-retro secondary">
-                <span>🏆 SKOR</span>
+                <span><i class="fas fa-trophy"></i> SKOR</span>
               </button>
             </div>
             
             <button id="btn-account" class="btn-retro tertiary">
-              <span id="btn-account-text">👤 MASUK</span>
+              <span id="btn-account-text"><i class="fas fa-user-circle"></i> MASUK</span>
             </button>
           </div>
 
           <div class="hint-box">
-            <p>🎮 KONTROL TANGAN</p>
+            <p><i class="fas fa-gamepad"></i> KONTROL TANGAN</p>
             <div class="gestures">
-              <div class="gesture-item"><span>☝️</span><small>KIRI</small></div>
-              <div class="gesture-item"><span>✊</span><small>TENGAH</small></div>
-              <div class="gesture-item"><span>✌️</span><small>KANAN</small></div>
+              <div class="gesture-item"><img src="assets/images/one-finger.png" alt="1 Finger"><small>KIRI (1)</small></div>
+              <div class="gesture-item"><img src="assets/images/two-fingers.png" alt="2 Fingers"><small>TENGAH (2)</small></div>
+              <div class="gesture-item"><img src="assets/images/three-fingers.png" alt="3 Fingers"><small>KANAN (3)</small></div>
             </div>
           </div>
         </div>
@@ -109,19 +118,25 @@
       <div id="screen-shop" class="overlay-screen flex-center" style="display: none">
         <div class="panel shop-panel">
           <div class="panel-header">
-            <h2>🏪 WARUNG LAYANGAN</h2>
+            <h2><i class="fas fa-store"></i> WARUNG</h2>
             <div class="stat-pill gold">
               <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
               <span id="shop-coins">0</span>
             </div>
           </div>
           
-          <div id="shop-items" class="shop-grid-items">
-            <!-- Items injected by JS -->
+          <div class="shop-carousel">
+            <button id="btn-shop-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+            
+            <div id="shop-item-display" class="shop-card-large">
+              <!-- Injected by JS -->
+            </div>
+            
+            <button id="btn-shop-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
           </div>
           
           <button id="btn-shop-back" class="btn-retro secondary btn-wide">
-            ◀️ KEMBALI
+            <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
         </div>
       </div>
@@ -129,7 +144,7 @@
       <!-- Game Over Screen -->
       <div id="screen-gameover" class="overlay-screen flex-center" style="display: none">
         <div class="panel gameover-panel">
-          <h1 class="danger-text blink">💥 MEGAT!</h1>
+          <h1 class="danger-text blink"><i class="fas fa-bomb"></i> PEGAT!</h1>
           
           <div class="results-grid">
             <div class="result-item">
@@ -151,10 +166,10 @@
           
           <div class="action-buttons">
             <button id="btn-restart" class="btn-retro primary btn-wide">
-              🔄 MAIN LAGI
+              <i class="fas fa-redo"></i> MAIN LAGI
             </button>
             <button id="btn-menu" class="btn-retro secondary btn-wide">
-              🏠 MENU
+              <i class="fas fa-home"></i> MENU
             </button>
           </div>
         </div>
@@ -165,30 +180,30 @@
         <div class="panel account-panel-wrapper">
           <!-- Not Logged In -->
           <div id="account-login" class="account-content">
-            <h2>🔐 MASUK AKUN</h2>
+            <h2><i class="fas fa-lock"></i> MASUK AKUN</h2>
             <p class="info-text">
               Simpan progres, akses leaderboard global, dan sinkronisasi data!
             </p>
             
             <button id="btn-google-login" class="btn-retro google-btn">
-              <span class="icon">G</span> MASUK DENGAN GOOGLE
+              <span class="icon"><i class="fab fa-google"></i></span> MASUK DENGAN GOOGLE
             </button>
             
             <button id="btn-account-back" class="btn-retro secondary btn-wide">
-              ◀️ KEMBALI
+              <i class="fas fa-arrow-left"></i> KEMBALI
             </button>
           </div>
           
           <!-- Logged In -->
           <div id="account-profile" class="account-content" style="display: none;">
-            <h2>👤 PROFIL PEMAIN</h2>
+            <h2><i class="fas fa-user-circle"></i> PROFIL PEMAIN</h2>
             
             <div class="profile-card">
               <div class="profile-field">
-                <label>NAMA</label>
+                <label for="profile-username-input">NAMA</label>
                 <div class="input-group">
                   <input type="text" id="profile-username-input" maxlength="15" />
-                  <button id="btn-save-username" class="btn-icon">💾</button>
+                  <button id="btn-save-username" class="btn-icon" aria-label="Simpan Nama"><i class="fas fa-save"></i></button>
                 </div>
               </div>
               
@@ -211,15 +226,15 @@
             
             <div class="profile-actions">
               <button id="btn-sync-data" class="btn-retro primary">
-                🔄 SINKRON
+                <i class="fas fa-sync"></i> SINKRON
               </button>
               <button id="btn-logout" class="btn-retro danger">
-                🚪 KELUAR
+                <i class="fas fa-sign-out-alt"></i> KELUAR
               </button>
             </div>
             
             <button id="btn-profile-back" class="btn-retro secondary btn-wide">
-              ◀️ KEMBALI
+              <i class="fas fa-arrow-left"></i> KEMBALI
             </button>
           </div>
         </div>
@@ -228,35 +243,37 @@
       <!-- Leaderboard Screen -->
       <div id="screen-leaderboard" class="overlay-screen flex-center" style="display: none">
         <div class="panel leaderboard-panel">
-          <h2>🏆 PAPAN SKOR</h2>
+          <h2><i class="fas fa-trophy"></i> PAPAN SKOR</h2>
           
           <div class="tab-container">
-            <button class="tab-btn active" data-tab="global">🌍 GLOBAL</button>
-            <button class="tab-btn" data-tab="personal">👤 SAYA</button>
+            <button class="tab-btn active" data-tab="global"><i class="fas fa-globe"></i> GLOBAL</button>
+            <button class="tab-btn" data-tab="personal"><i class="fas fa-user"></i> SAYA</button>
           </div>
           
           <div class="leaderboard-scroll">
             <div id="leaderboard-content" class="leaderboard-list">
-              <div class="loading-spinner">⏳ Memuat...</div>
+              <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
             </div>
           </div>
           
           <button id="btn-leaderboard-back" class="btn-retro secondary btn-wide">
-            ◀️ KEMBALI
+            <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
         </div>
       </div>
 
       <!-- Webcam Container -->
-      <div class="webcam-container">
+      <div class="webcam-container" style="display: none;">
         <div class="rec-badge">AI CAM</div>
+        <div class="cam-status" style="position: absolute; bottom: 2px; left: 5px; font-size: 8px; color: white; z-index: 10;">Siaga</div>
+        <div class="rec-dot" style="position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: red; border-radius: 50%; display: none; z-index: 10;"></div>
         <video id="webcam" playsinline></video>
         <canvas id="debugCanvas"></canvas>
       </div>
     </div>
 
     <!-- Mobile Controls -->
-    <div id="mobile-controls">
+    <div id="mobile-controls" style="display: none;">
       <div class="d-btn left" aria-label="Kiri">
         <img src="assets/images/ui_arrow.png" alt="<">
       </div>

@@ -22,13 +22,16 @@ export class AccountManager {
       this.isLoggedIn = true;
       const { profile } = await this.loadProfile();
       this.currentProfile = profile;
+      
+      // Sync Inventory
+      await this.syncInventory();
+      
       this.updateUI();
     }
   }
 
   async login() {
     try {
-      // OAuth redirect flow - user will NOT be returned immediately
       const { error } = await supabaseService.signInWithGoogle();
       
       if (error) {
@@ -36,9 +39,6 @@ export class AccountManager {
         alert('❌ Login gagal: ' + error.message);
         return false;
       }
-
-      // If successful, the page will redirect. 
-      // We don't need to do anything else here.
       return true;
     } catch (e) {
       console.error('Login exception:', e);
@@ -54,7 +54,6 @@ export class AccountManager {
       this.currentProfile = null;
       this.isLoggedIn = false;
       
-      // Clear storage and reload
       localStorage.clear();
       window.location.reload();
       return true;
@@ -71,7 +70,6 @@ export class AccountManager {
     const { profile, error } = await supabaseService.getProfile();
     
     if (error && error.code === 'PGRST116') {
-      // Profile doesn't exist yet, it will be auto-created
       return { profile: null, error: null };
     }
 
@@ -82,6 +80,26 @@ export class AccountManager {
     return { profile, error };
   }
 
+  async syncInventory() {
+    if (!this.currentUser) return;
+
+    try {
+      const { inventory } = await supabaseService.getInventory();
+      if (inventory && inventory.length > 0) {
+        // Update local storage with cloud inventory
+        inventory.forEach(item => {
+          Storage.saveOwnedItem(item.item_id);
+          if (item.is_equipped) {
+            Storage.setSelectedItem(item.item_id);
+          }
+        });
+        console.log("✅ Inventory synced from cloud");
+      }
+    } catch (e) {
+      console.error("Inventory sync failed:", e);
+    }
+  }
+
   async syncData() {
     if (!this.isLoggedIn) {
       alert('⚠️ Anda harus login terlebih dahulu!');
@@ -90,6 +108,7 @@ export class AccountManager {
 
     try {
       await this._syncToCloud();
+      await this.syncInventory(); // Also pull latest inventory
       alert('✅ Data berhasil disinkronkan ke cloud!');
       return true;
     } catch (e) {
@@ -225,7 +244,7 @@ export class AccountManager {
     if (!entries || entries.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <p>📭 Belum ada data leaderboard.</p>
+          <p><i class="fas fa-scroll"></i> Belum ada data leaderboard.</p>
           <p>Mainkan game dan submit skor Anda!</p>
         </div>
       `;
@@ -235,15 +254,15 @@ export class AccountManager {
     container.innerHTML = entries.map((entry, index) => {
       const rank = index + 1;
       const rankClass = rank <= 3 ? `top-${rank}` : '';
-      const username = entry.profiles?.username || 'Anonymous';
-      const avatar = entry.profiles?.avatar_id || 'bebean_std';
+      // FIX: Handle nested profiles object correctly
+      const username = entry.username || entry.profiles?.username || 'Anonymous';
+      const avatar = entry.avatar_id || entry.profiles?.avatar_id || 'bebean_std';
       const score = entry.score || 0;
 
       return `
         <div class="leaderboard-entry">
           <div class="leaderboard-rank ${rankClass}">#${rank}</div>
           <div class="leaderboard-user">
-            <div class="leaderboard-avatar">${this.getAvatarEmoji(avatar)}</div>
             <div class="leaderboard-name">${username}</div>
           </div>
           <div class="leaderboard-score">${score.toLocaleString()}</div>
@@ -253,12 +272,15 @@ export class AccountManager {
   }
 
   getAvatarEmoji(avatarId) {
+    // Return HTML for the avatar icon
     const avatars = {
-      'bebean_std': '🪁',
-      'pecukan_agile': '💜',
-      'janggan_legend': '🖤'
+      'bebean_std': 'assets/images/kite_bebean.png',
+      'pecukan_agile': 'assets/images/kite_pecukan.png',
+      'janggan_legend': 'assets/images/kite_kuwir.png'
     };
-    return avatars[avatarId] || '🪁';
+    
+    const src = avatars[avatarId] || 'assets/images/kite_bebean.png';
+    return `<img src="${src}" class="icon-sm" alt="Avatar" style="vertical-align: middle;">`;
   }
 
   getDisplayUsername() {

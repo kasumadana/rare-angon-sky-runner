@@ -40,6 +40,13 @@ export class GameManager {
 
     this.loop = this.loop.bind(this);
     this.lastTime = 0;
+    
+    // Audio State
+    this.bgm = null;
+    this.currentBgmKey = null;
+    
+    // Cloud System
+    this.clouds = [];
   }
 
   async init() {
@@ -48,7 +55,6 @@ export class GameManager {
 
     this.uiManager.showLoading(true);
 
-    // Load Assets & AI
     try {
       await Promise.all([
         this.assetLoader.loadAll(),
@@ -59,10 +65,27 @@ export class GameManager {
       console.error("❌ Initialization failed:", e);
     }
 
+    this.initClouds();
+
     this.uiManager.showLoading(false);
     this.changeState(GAME_STATE.MENU);
 
     requestAnimationFrame(this.loop);
+  }
+
+  initClouds() {
+    this.clouds = [];
+    const cloudCount = 8; // Increased count
+    for (let i = 0; i < cloudCount; i++) {
+      this.clouds.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * (this.canvas.height / 2), // Top half only
+        speed: 10 + Math.random() * 30, // Random speed
+        type: Math.random() > 0.5 ? "CLOUD_SMALL" : "CLOUD_BIG",
+        alpha: 0.4 + Math.random() * 0.4, // Random transparency
+        scale: 0.5 + Math.random() * 0.5 // Random size
+      });
+    }
   }
 
   resize() {
@@ -80,9 +103,16 @@ export class GameManager {
     this.currentState = newState;
     this.uiManager.updateUIState(newState);
 
-    if (newState === GAME_STATE.PLAYING) {
+    // BGM Logic
+    if (newState === GAME_STATE.MENU) {
+      this.playBGM('BGM_MENU');
+    } else if (newState === GAME_STATE.PLAYING) {
+      this.playBGM('BGM_GAMEPLAY');
       this.resetGame();
       this.inputHandler.startDetection();
+    } else if (newState === GAME_STATE.GAMEOVER) {
+      this.stopBGM(); 
+      this.inputHandler.stopDetection();
     } else {
       this.inputHandler.stopDetection();
     }
@@ -99,8 +129,6 @@ export class GameManager {
     const selectedSkin = Storage.getSelectedItem();
     this.player = new Player(selectedSkin);
     this.timers = { spawn: 0, coinSpawn: 0 };
-    
-    console.log("Game Reset. Player created:", this.player);
   }
 
   playSFX(key) {
@@ -109,6 +137,30 @@ export class GameManager {
       const clone = sound.cloneNode(true);
       clone.volume = 0.5;
       clone.play().catch(e => {});
+    }
+  }
+  
+  playBGM(key) {
+    if (this.currentBgmKey === key && this.bgm && !this.bgm.paused) return;
+    
+    this.stopBGM();
+    
+    const sound = this.assetLoader.getSound(key);
+    if (sound) {
+      this.bgm = sound;
+      this.bgm.loop = true;
+      this.bgm.volume = 0.4;
+      this.bgm.play().catch(e => console.warn("BGM blocked:", e));
+      this.currentBgmKey = key;
+    }
+  }
+  
+  stopBGM() {
+    if (this.bgm) {
+      this.bgm.pause();
+      this.bgm.currentTime = 0;
+      this.bgm = null;
+      this.currentBgmKey = null;
     }
   }
 
@@ -126,6 +178,9 @@ export class GameManager {
   }
 
   update(dt) {
+    // Always update clouds for dynamic background
+    this.updateClouds(dt);
+
     if (this.currentState !== GAME_STATE.PLAYING) return;
 
     // Difficulty
@@ -180,6 +235,16 @@ export class GameManager {
     this.uiManager.updateHUD(Math.floor(this.score), this.coinsCollected);
   }
 
+  updateClouds(dt) {
+    this.clouds.forEach(cloud => {
+      cloud.x -= cloud.speed * dt;
+      if (cloud.x < -200) {
+        cloud.x = this.canvas.width + 100;
+        cloud.y = Math.random() * (this.canvas.height / 2);
+      }
+    });
+  }
+
   async handleGameOver() {
     const highScore = Storage.getHighScore();
     const finalScore = Math.floor(this.score);
@@ -210,17 +275,8 @@ export class GameManager {
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
-    // Clouds
-    const cloudSmall = this.assetLoader.getImage("CLOUD_SMALL");
-    const cloudBig = this.assetLoader.getImage("CLOUD_BIG");
-    
-    if (cloudSmall) {
-      this.ctx.drawImage(cloudSmall, 100, 100, 100, 60);
-      this.ctx.drawImage(cloudSmall, 600, 200, 120, 70);
-    }
-    if (cloudBig) {
-      this.ctx.drawImage(cloudBig, 300, 50, 200, 100);
-    }
+    // Draw Clouds
+    this.drawClouds();
 
     // Game Objects
     if (this.currentState === GAME_STATE.PLAYING || this.currentState === GAME_STATE.GAMEOVER) {
@@ -228,5 +284,24 @@ export class GameManager {
       this.obstaclePool.drawAll(this.ctx);
       if (this.player) this.player.draw(this.ctx);
     }
+  }
+
+  drawClouds() {
+    this.clouds.forEach(cloud => {
+      const img = this.assetLoader.getImage(cloud.type);
+      if (img) {
+        this.ctx.save();
+        this.ctx.globalAlpha = cloud.alpha;
+        
+        // Calculate dimensions based on aspect ratio
+        const aspectRatio = img.width / img.height;
+        const baseHeight = (cloud.type === "CLOUD_BIG" ? 120 : 70); // Increased from 80/50
+        const h = baseHeight * cloud.scale;
+        const w = h * aspectRatio;
+        
+        this.ctx.drawImage(img, cloud.x, cloud.y, w, h);
+        this.ctx.restore();
+      }
+    });
   }
 }

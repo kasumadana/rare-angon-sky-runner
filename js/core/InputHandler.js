@@ -13,24 +13,27 @@ export class InputHandler {
 
     // Cooldown & Smoothing
     this.lastActionTime = 0;
-    this.actionCooldown = 200;
-    this.lastCommand = 0;
+    this.actionCooldown = 500; // Increased cooldown to prevent rapid switching
+    this.lastCommand = null;
     this.commandStabilityCounter = 0;
     
     // AI Throttling (12 FPS = 83ms per frame)
     this.lastDetectionTime = 0;
     this.detectionInterval = 83; // ms
     
-    // Mobile Detection
-    this.isMobile = window.innerWidth < 768;
+    // Mobile Detection (Check width OR user agent)
+    this.isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
   async init() {
     this._setupKeyboardTouch();
     
-    // Skip AI on mobile for performance
+    // Skip AI on mobile for performance AND UI cleanliness
     if (this.isMobile) {
-      console.log("Mobile detected: AI hand detection disabled");
+      console.log("📱 Mobile detected: AI hand detection disabled");
+      // Hide webcam container explicitly
+      const camContainer = document.querySelector('.webcam-container');
+      if (camContainer) camContainer.style.display = 'none';
       return;
     }
     
@@ -55,26 +58,36 @@ export class InputHandler {
       console.warn("⚠️ AI Init Failed, fallback to manual inputs.", e.message);
       const camStatus = document.querySelector(".cam-status");
       if (camStatus) {
-        camStatus.innerText = "Gunakan Keyboard/Touch";
+        camStatus.innerText = "Gunakan Keyboard";
         camStatus.style.color = "var(--heart-red)";
       }
     }
   }
 
   startDetection() {
+    // Never start detection on mobile
+    if (this.isMobile) return;
+
     if (!this.isDetecting && this.isWebcamReady && this.model) {
       this.isDetecting = true;
       this._detectionLoop();
-      document.querySelector(".cam-status").innerText = "Mendeteksi Gestur...";
-      document.querySelector(".rec-dot").style.display = "block";
+      const statusEl = document.querySelector(".cam-status");
+      const dotEl = document.querySelector(".rec-dot");
+      if (statusEl) statusEl.innerText = "Mendeteksi Gestur...";
+      if (dotEl) dotEl.style.display = "block";
     }
   }
 
   stopDetection() {
     this.isDetecting = false;
-    this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
-    document.querySelector(".cam-status").innerText = "Siaga";
-    document.querySelector(".rec-dot").style.display = "none";
+    if (this.debugCtx && this.debugCanvas) {
+      this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
+    }
+    
+    const statusEl = document.querySelector(".cam-status");
+    const dotEl = document.querySelector(".rec-dot");
+    if (statusEl) statusEl.innerText = "Siaga";
+    if (dotEl) dotEl.style.display = "none";
   }
 
   _setupKeyboardTouch() {
@@ -99,13 +112,28 @@ export class InputHandler {
       }
     };
 
+    // Add passive: false to allow preventDefault()
     if (btnLeft) {
-      btnLeft.addEventListener("touchstart", (e) => { e.preventDefault(); handleTouch("left"); });
-      btnLeft.addEventListener("mousedown", (e) => { e.preventDefault(); handleTouch("left"); });
+      btnLeft.addEventListener("touchstart", (e) => { 
+        if (e.cancelable) e.preventDefault(); 
+        handleTouch("left"); 
+      }, { passive: false });
+      
+      btnLeft.addEventListener("mousedown", (e) => { 
+        e.preventDefault(); 
+        handleTouch("left"); 
+      });
     }
     if (btnRight) {
-      btnRight.addEventListener("touchstart", (e) => { e.preventDefault(); handleTouch("right"); });
-      btnRight.addEventListener("mousedown", (e) => { e.preventDefault(); handleTouch("right"); });
+      btnRight.addEventListener("touchstart", (e) => { 
+        if (e.cancelable) e.preventDefault(); 
+        handleTouch("right"); 
+      }, { passive: false });
+      
+      btnRight.addEventListener("mousedown", (e) => { 
+        e.preventDefault(); 
+        handleTouch("right"); 
+      });
     }
   }
 
@@ -128,7 +156,6 @@ export class InputHandler {
   }
 
   async _loadModel() {
-    // Load lighter model config if possible for performance
     this.model = await handpose.load({
         detectionConfidence: 0.8,
         iouThreshold: 0.3,
@@ -144,7 +171,6 @@ export class InputHandler {
 
       const now = performance.now();
       
-      // Throttle detection to 12 FPS (every 83ms)
       if (now - this.lastDetectionTime >= this.detectionInterval) {
         this.lastDetectionTime = now;
         
@@ -169,73 +195,66 @@ export class InputHandler {
   _processGesture(landmarks) {
     const now = Date.now();
     
-    // LOGIKA GESTUR JARI (REFINED)
-    // Menggunakan Y-coordinate: 0 di atas, semakin besar ke bawah.
-    
-    // 1. Cek status dasar jari (Tip vs MCP)
-    // MCP (Knuckle) adalah titik referensi yang stabil.
-    const isIndexUp = landmarks[8][1] < landmarks[5][1];   // Index
-    const isMiddleUp = landmarks[12][1] < landmarks[9][1]; // Middle
-    
-    // 2. Hitung ukuran tangan referensi (Wrist ke Middle MCP) untuk toleransi
-    const handSize = Math.abs(landmarks[0][1] - landmarks[9][1]);
-    const tolerance = handSize * 0.25; // 25% dari ukuran tangan
+    // Count extended fingers (Index, Middle, Ring, Pinky)
+    // Finger is extended if tip is higher (lower y value) than base (pip)
+    const isFingerExtended = (tipIdx, pipIdx) => {
+      return landmarks[tipIdx][1] < landmarks[pipIdx][1];
+    };
 
-    let currentCommand = 0; // Default: Center
+    let fingerCount = 0;
+    if (isFingerExtended(8, 6)) fingerCount++;   // Index
+    if (isFingerExtended(12, 10)) fingerCount++; // Middle
+    if (isFingerExtended(16, 14)) fingerCount++; // Ring
+    if (isFingerExtended(20, 18)) fingerCount++; // Pinky
+    // Thumb is tricky, let's ignore it for 1-2-3 count or treat it loosely
+    // if (landmarks[4][0] < landmarks[3][0]) fingerCount++; // Thumb (depends on hand side)
+
+    let targetLane = null;
     let gestureName = "NETRAL";
 
-    if (isIndexUp) {
-        if (!isMiddleUp) {
-            // Kasus Jelas: Telunjuk Naik, Tengah Turun
-            currentCommand = -1; // KIRI
-            gestureName = "KIRI (Telunjuk)";
-        } else {
-            // Kasus Ambigu: Telunjuk & Tengah Naik
-            // Cek ketinggian relatif. Apakah Telunjuk jauh lebih tinggi?
-            // Ingat Y lebih kecil = Lebih tinggi.
-            
-            if (landmarks[8][1] < landmarks[12][1] - tolerance) {
-                // Telunjuk signifikan lebih tinggi dari Tengah -> Anggap KIRI (Lazy Pointing)
-                currentCommand = -1;
-                gestureName = "KIRI (Lazy)";
-            } else {
-                // Ketinggian mirip -> KANAN (Peace)
-                currentCommand = 1;
-                gestureName = "KANAN (Peace)";
-            }
-        }
+    if (fingerCount === 1) {
+      targetLane = LANES.LEFT;
+      gestureName = "1 JARI (KIRI)";
+    } else if (fingerCount === 2) {
+      targetLane = LANES.CENTER;
+      gestureName = "2 JARI (TENGAH)";
+    } else if (fingerCount === 3) {
+      targetLane = LANES.RIGHT;
+      gestureName = "3 JARI (KANAN)";
     } else {
-        // Telunjuk Turun -> Pasti TENGAH (Fist/Relax)
-        currentCommand = 0;
-        gestureName = "TENGAH (Kepal)";
+      gestureName = `${fingerCount} JARI`;
     }
 
     this.detectedGesture = gestureName;
-    this.detectedCommand = currentCommand; // Simpan untuk visualisasi panah
+    this.detectedCommand = targetLane;
 
-    // STABILISASI (Debounce)
-    if (currentCommand === this.lastCommand) {
-        this.commandStabilityCounter++;
+    // Stability Check
+    if (targetLane !== null && targetLane === this.lastCommand) {
+      this.commandStabilityCounter++;
     } else {
-        this.commandStabilityCounter = 0;
-        this.lastCommand = currentCommand;
+      this.commandStabilityCounter = 0;
+      this.lastCommand = targetLane;
     }
 
-    // Eksekusi jika stabil (2 frame)
-    if (this.commandStabilityCounter >= 2) {
-        if (now - this.lastActionTime > this.actionCooldown) {
-            const player = this.gameManager.player;
-            if (player) {
-                let targetLane = LANES.CENTER;
-                if (currentCommand === -1) targetLane = LANES.LEFT;
-                if (currentCommand === 1) targetLane = LANES.RIGHT;
-                
-                if (player.currentLane !== targetLane) {
-                    player.moveLane(currentCommand);
-                    this.lastActionTime = now;
-                }
-            }
+    // Execute Command
+    if (this.commandStabilityCounter >= 3) { // Require 3 stable frames (~250ms)
+      if (now - this.lastActionTime > this.actionCooldown) {
+        const player = this.gameManager.player;
+        if (player && targetLane !== null) {
+          if (player.currentLane !== targetLane) {
+            // Calculate direction to move
+            const diff = targetLane - player.currentLane;
+            // Move step by step or jump? 
+            // Game logic supports moveLane(-1/1). 
+            // But here we want absolute positioning.
+            // Let's just move towards target.
+            if (diff > 0) player.moveRight();
+            if (diff < 0) player.moveLeft();
+            
+            this.lastActionTime = now;
+          }
         }
+      }
     }
   }
 
@@ -244,33 +263,31 @@ export class InputHandler {
     const w = this.debugCanvas.width;
     const h = this.debugCanvas.height;
     
-    // Pastikan video dimensions valid
     const vw = this.video.videoWidth || 320;
     const vh = this.video.videoHeight || 240;
     
     const scaleX = w / vw;
     const scaleY = h / vh;
 
-    // 1. Gambar Tulang
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 2;
 
     const connections = [
-        [0,1], [1,2], [2,3], [3,4], // Thumb
-        [0,5], [5,6], [6,7], [7,8], // Index
-        [0,9], [9,10], [10,11], [11,12], // Middle
-        [0,13], [13,14], [14,15], [15,16], // Ring
-        [0,17], [17,18], [18,19], [19,20] // Pinky
+        [0,1], [1,2], [2,3], [3,4],
+        [0,5], [5,6], [6,7], [7,8],
+        [0,9], [9,10], [10,11], [11,12],
+        [0,13], [13,14], [14,15], [15,16],
+        [0,17], [17,18], [18,19], [19,20]
     ];
     
     ctx.beginPath();
     connections.forEach(([start, end]) => {
-        ctx.moveTo(landmarks[start][0] * scaleX, landmarks[start][1] * scaleY);
-        ctx.lineTo(landmarks[end][0] * scaleX, landmarks[end][1] * scaleY);
+      ctx.moveTo(landmarks[start][0] * scaleX, landmarks[start][1] * scaleY);
+      ctx.lineTo(landmarks[end][0] * scaleX, landmarks[end][1] * scaleY);
     });
     ctx.stroke();
 
-    // 2. Gambar Sendi
+    // Draw Tips
     for (let i = 0; i < landmarks.length; i++) {
         const x = landmarks[i][0] * scaleX;
         const y = landmarks[i][1] * scaleY;
@@ -280,31 +297,20 @@ export class InputHandler {
         ctx.fill();
     }
 
-    // 3. Visualisasi Arah (Big Arrow Overlay)
-    if (this.detectedCommand !== undefined) {
+    // Draw HUD
+    if (this.detectedGesture) {
         ctx.save();
         ctx.translate(w / 2, h / 2);
-        // Karena canvas di-flip CSS, kita harus flip balik untuk teks/icon arah yang benar secara visual
-        ctx.scale(-1, 1); 
+        ctx.scale(-1, 1); // Mirror text back
         
-        ctx.font = "bold 40px Arial";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.font = "bold 30px Arial";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
         ctx.strokeStyle = "black";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        let symbol = "✊";
-        if (this.detectedCommand === -1) symbol = "👈";
-        if (this.detectedCommand === 1) symbol = "👉";
         
-        ctx.strokeText(symbol, 0, 0);
-        ctx.fillText(symbol, 0, 0);
-        
-        // Teks Debug Kecil di bawah
-        ctx.font = "12px Arial";
-        ctx.strokeText(this.detectedGesture || "", 0, 40);
-        ctx.fillText(this.detectedGesture || "", 0, 40);
+        ctx.strokeText(this.detectedGesture, 0, 0);
+        ctx.fillText(this.detectedGesture, 0, 0);
         
         ctx.restore();
     }

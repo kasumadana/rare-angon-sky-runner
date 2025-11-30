@@ -10,7 +10,7 @@ export const CONFIG = {
   CANVAS_WIDTH: 800,
   CANVAS_HEIGHT: 600,
   BASE_SPEED: 250,
-  LANE_WIDTH: 100,
+  LANE_WIDTH: 150, 
   SPAWN_RATE: 1.2,
   DEBUG_MODE: false,
 };
@@ -37,7 +37,6 @@ export const PALETTE = {
   CYAN: "#00BCD4",
 };
 
-// Asset Paths - CORRECTED based on actual file list
 export const ASSETS = {
   IMAGES: {
     // Skins
@@ -51,7 +50,7 @@ export const ASSETS = {
     OBS_BIRD_3: "assets/images/obs_bird_3.png",
     OBS_DRONE: "assets/images/obs_drone.png",
     
-    // Environment - FIXED NAMES
+    // Environment
     CLOUD_SMALL: "assets/images/bg_cloud_small.png",
     CLOUD_BIG: "assets/images/bg_cloud_big.png",
     
@@ -67,10 +66,11 @@ export const ASSETS = {
     COIN: "assets/sounds/sfx-coin.mp3",
     HIT: "assets/sounds/sfx-hit.mp3",
     BUY: "assets/sounds/sfx-shop-buy.mp3",
+    BGM_MENU: "assets/sounds/bgm-menu.mp3",
+    BGM_GAMEPLAY: "assets/sounds/bgm-gameplay.mp3",
   }
 };
 
-// Sprite Configurations
 export const SPRITES = {
   BIRD: {
     FRAMES: ["OBS_BIRD_1", "OBS_BIRD_2", "OBS_BIRD_3"],
@@ -83,8 +83,8 @@ export const SPRITES = {
     HEIGHT: 50
   },
   PLAYER: {
-    WIDTH: 60,
-    HEIGHT: 80
+    WIDTH: 110,
+    HEIGHT: 110
   },
   COIN: {
     WIDTH: 40,
@@ -105,13 +105,13 @@ export const SHOP_ITEMS = [
     name: "PECUKAN LINCAH", 
     cost: 100,
     imageKey: "SKIN_PECUKAN",
-    description: "Layangan ungu yang gesit"
+    description: "Layangan pecukan yang gesit"
   },
   { 
     id: "janggan_legend", 
-    name: "JANGGAN LEGENDA", 
+    name: "KUWIR LEGENDA", 
     cost: 500,
     imageKey: "SKIN_KUWIR",
-    description: "Layangan hitam legendaris"
+    description: "Layangan kuwir legendaris"
   },
 ];

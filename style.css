@@ -184,30 +184,7 @@ h2 {
 
 .subtitle {
     font-size: 10px;
-    color: #666;
-    margin-top: -15px;
-    margin-bottom: 20px;
-    display: block;
-}
-
-.game-title {
-    margin-bottom: 30px;
-}
-
-.title-main {
-    display: block;
-    font-size: 32px;
-    color: var(--accent-red);
-    text-shadow: 4px 4px 0 var(--text-main);
-    margin-bottom: 10px;
-}
-
-.title-sub {
-    display: block;
-    font-size: 12px;
-    color: #fff;
-    text-shadow: 2px 2px 0 var(--text-main);
-    letter-spacing: 2px;
+    justify-content: center;
 }
 
 /* --- Buttons --- */
@@ -288,7 +265,7 @@ h2 {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 20px;
+    margin: 20px 0;
 }
 
 .stat-pill {
@@ -353,6 +330,10 @@ h2 {
     font-family: inherit;
     font-size: 10px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
 .tab-btn.active {
@@ -582,5 +563,589 @@ h2 {
     .hint-box {
         display: none;
         /* Hide desktop hints on mobile */
+    }
+
+    .game-logo {
+        min-width: 100%;
+    }
+}
+
+/* --- Gestures --- */
+.gestures {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.gesture-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.profile-field label {
+    display: block;
+    font-size: 8px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 8px;
+    font-family: inherit;
+    border: 2px solid var(--text-main);
+    font-size: 10px;
+}
+
+.profile-stats-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-box {
+    flex: 1;
+    background: #fff;
+    border: 2px solid #eee;
+    padding: 10px;
+    text-align: center;
+}
+
+.stat-box span {
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.gold-text {
+    color: var(--accent-gold-dark);
+}
+
+/* --- Webcam --- */
+.webcam-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 160px;
+    height: 120px;
+    border: 4px solid var(--text-main);
+    border-radius: var(--radius);
+    background: #000;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    z-index: 50;
+    /* Hidden on mobile by default, shown on desktop */
+    display: block;
+}
+
+#webcam,
+#debugCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror */
+}
+
+#debugCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.rec-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: red;
+    color: white;
+    font-size: 8px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    z-index: 10;
+}
+
+/* --- Mobile Controls --- */
+#mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    display: none;
+    /* Hidden by default (Desktop) */
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+    /* Let clicks pass through empty space */
+    z-index: 300;
+}
+
+.d-btn {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 4px solid var(--text-main);
+    border-radius: 50%;
+    pointer-events: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.d-btn:active {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(0.95);
+}
+
+.d-btn img {
+    width: 40px;
+    height: 40px;
+}
+
+.d-btn.left img {
+    transform: rotate(180deg);
+}
+
+/* --- Animations --- */
+.blink {
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* --- Media Queries --- */
+@media (max-width: 768px) {
+
+    /* Mobile View */
+    .panel {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .title-main {
+        font-size: 24px;
+    }
+
+    /* Hide Webcam on Mobile */
+    .webcam-container {
+        display: none;
+    }
+
+    /* Show Mobile Controls */
+    #mobile-controls {
+        display: flex;
+    }
+
+    .shop-grid-items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hint-box {
+        display: none;
+        /* Hide desktop hints on mobile */
+    }
+
+
+    .game-logo {
+        max-width: 80%;
+    }
+}
+
+/* --- Gestures --- */
+.gestures {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.gesture-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.gesture-item img {
+    filter: invert(1) brightness(2);
+}
+
+.gesture-item small {
+    font-size: 8px;
+    color: #fff;
+    /* White text for hints */
+    margin-top: 5px;
+}
+
+.profile-field label {
+    display: block;
+    font-size: 8px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 8px;
+    font-family: inherit;
+    border: 2px solid var(--text-main);
+    font-size: 10px;
+}
+
+.profile-stats-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-box {
+    flex: 1;
+    background: #fff;
+    border: 2px solid #eee;
+    padding: 10px;
+    text-align: center;
+}
+
+.stat-box span {
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.gold-text {
+    color: var(--accent-gold-dark);
+}
+
+/* --- Webcam --- */
+.webcam-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 160px;
+    height: 120px;
+    border: 4px solid var(--text-main);
+    border-radius: var(--radius);
+    background: #000;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    z-index: 50;
+    /* Hidden on mobile by default, shown on desktop */
+    display: block;
+}
+
+#webcam,
+#debugCanvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror */
+}
+
+#debugCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.rec-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: red;
+    color: white;
+    font-size: 8px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    z-index: 10;
+}
+
+/* --- Mobile Controls --- */
+#mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    display: none;
+    /* Hidden by default (Desktop) */
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+    /* Let clicks pass through empty space */
+    z-index: 300;
+}
+
+.d-btn {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 4px solid var(--text-main);
+    border-radius: 50%;
+    pointer-events: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.d-btn:active {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(0.95);
+}
+
+.d-btn img {
+    width: 40px;
+    height: 40px;
+}
+
+.d-btn.left img {
+    transform: rotate(180deg);
+}
+
+/* --- Animations --- */
+.blink {
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* --- Media Queries --- */
+@media (max-width: 768px) {
+
+    /* Mobile View */
+    .panel {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .title-main {
+        font-size: 24px;
+    }
+
+    /* Hide Webcam on Mobile */
+    .webcam-container {
+        display: none;
+    }
+
+    /* Show Mobile Controls */
+    #mobile-controls {
+        display: flex;
+    }
+
+    .hint-box {
+        display: none;
+        /* Hide desktop hints on mobile */
+    }
+
+    .game-logo {
+        max-width: 80%;
+    }
+}
+
+/* --- Hint Box --- */
+.hint-box {
+    background: transparent;
+    /* Removed background */
+    border: none;
+    /* Removed border */
+    padding: 10px;
+    margin-top: 20px;
+    width: 100%;
+    text-align: center;
+    /* Centered */
+}
+
+.hint-box p {
+    margin: 0 0 15px 0;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    /* White text */
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* --- Shop Carousel --- */
+.shop-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0;
+    gap: 10px;
+}
+
+.shop-card-large {
+    flex: 1;
+    background: #fff;
+    border: 4px solid var(--text-main);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 250px;
+    justify-content: center;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.shop-card-large img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.2));
+}
+
+.shop-card-large h3 {
+    font-size: 14px;
+    margin: 10px 0;
+    color: var(--text-main);
+}
+
+.shop-card-large p {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    height: 30px;
+    /* Fixed height for description */
+}
+
+.nav-btn {
+    background: var(--accent-blue);
+    border: 2px solid var(--text-main);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    box-shadow: 2px 2px 0 var(--text-main);
+}
+
+.nav-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--text-main);
+}
+
+/* --- Profile Email Fix --- */
+.email-text {
+    font-size: 9px;
+    /* Smaller font */
+    word-break: break-all;
+    /* Break long emails */
+    line-height: 1.2;
+    display: block;
+}
+
+/* --- Game Over Polish --- */
+.gameover-panel {
+    padding: 30px 20px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    /* Increased gap */
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 15px;
+    border-radius: var(--radius);
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-item .label {
+    font-size: 10px;
+    color: var(--text-main);
+}
+
+.result-item .value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* --- Text Overflow Handling --- */
+.shop-item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+.profile-card span,
+.profile-card label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Mobile Adjustments --- */
+@media (max-width: 768px) {
+    .menu-content {
+        width: 90%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+
+    .panel {
+        width: 90%;
+        max-width: 350px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .btn-retro {
+        padding: 12px 15px;
+        /* Slightly smaller padding on mobile */
+    }
+
+    .shop-card-large {
+        padding: 15px;
+        min-height: 220px;
+    }
+
+    .shop-card-large img {
+        width: 80px;
+        height: 80px;
     }
 }
