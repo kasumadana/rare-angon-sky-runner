@@ -265,7 +265,7 @@ h2 {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin: 20px 0;
+    margin-bottom: 20px;
 }
 
 .stat-pill {
