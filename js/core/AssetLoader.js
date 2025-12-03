@@ -1,5 +1,7 @@
+//pernyataan import dari JavaScript untuk mengambil objek dari assets berkas.
 import { ASSETS } from "../utils/Constants.js";
 
+//Metode khusus yang dipanggil saat objek AssetLoader baru dibuat dan menganalisis properti properti pada objek.
 export class AssetLoader {
   constructor() {
     this.images = {};
@@ -8,6 +10,7 @@ export class AssetLoader {
     this.totalAssets = 0;
   }
 
+  //Metode utama berjenis async (asinkron) yang mengatur seluruh proses pemuatan.
   async loadAll() {
     const imageKeys = Object.keys(ASSETS.IMAGES);
     const soundKeys = Object.keys(ASSETS.SOUNDS);
@@ -31,6 +34,7 @@ export class AssetLoader {
     }
   }
 
+  //Metode yang memuat satu berkas gambar, mengembalikan sebuah Promise dan dapat membuat objek image baru.
   loadImage(key, url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -50,6 +54,7 @@ export class AssetLoader {
     });
   }
 
+  //Metode yang memuat satu berkas suara, mengembalikan sebuah Promise dan dapat membuat objek audio baru.
   loadSound(key, url) {
     return new Promise((resolve) => {
       const audio = new Audio();
@@ -82,10 +87,12 @@ export class AssetLoader {
     });
   }
 
+  //Metode getter sederhana untuk mengamnbil objek image yang sudah dimuat dari koleksi this.image.
   getImage(key) {
     return this.images[key];
   }
 
+  //Metode getter sederhana untuk mengambil objek audio yang sudah dimuat dari koleksi this.sounds.
   getSound(key) {
     return this.sounds[key];
   }
