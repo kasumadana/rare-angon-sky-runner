@@ -1,63 +1,57 @@
 // Ambil/Impor Supabase dari CDN (sudah dimuat di file index.html)
 // Cek apakah Supabase sudah bisa dipakai/tersedia
 if (typeof window.supabase === 'undefined') {
-  console.error('❌ Supabase CDN not loaded! Add script tag to index.html');
+  console.error('❌ Supabase CDN not loaded! Coba cek script tag di index.html.');
 }
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/supabase.config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/supabase.config.js'; // Ambil alamat dan kunci rahasia Supabase
 
 /**
- * Lapisan Layanan (Service Layer) Supabase
- * Mengurus semua operasi backend (sistem belakang): Otentikasi (Auth), Profil,
- * Papan Peringkat (Leaderboard), dan Inventaris.
+ * Lapisan Layanan (Service Layer) Supabase 🛠️
+ * Ini adalah "jembatan" kita ke server Supabase. Dia mengurus semua urusan data
+ * di belakang layar: Login, Profil, Papan Skor, dan Inventaris.
  */
 class SupabaseService {
   constructor() {
-    // Gunakan supabase global dari CDN.
+    // Coba hubungkan ke Supabase.
     if (window.supabase && window.supabase.createClient) {
-      this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      this.currentUser = null;
-      console.log('✅ Supabase initialized');
+      this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Buat klien Supabase
+      this.currentUser = null; // Data pengguna yang sedang aktif
+      console.log('✅ Supabase siap dipakai!');
     } else {
-      console.warn('⚠️ Supabase not available, features disabled');
+      console.warn('⚠️ Supabase tidak ditemukan, fitur online dimatikan.');
       this.supabase = null;
       this.currentUser = null;
     }
   }
 
-  // ==================== OTENTIKASI ====================
+  // ==================== OTENTIKASI (LOGIN/LOGOUT) ====================
 
- /**
- * Masuk (Sign In) menggunakan Google OAuth
- * @returns {Promise<{user, session, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * data {user (pengguna), session (sesi login), atau error (kesalahan)}
- */
+  /**
+   * Masuk (Sign In) pakai akun Google.
+   * @returns {Promise<{user, session, error}>} Hasilnya adalah data {pengguna, sesi, atau error}
+   */
   async signInWithGoogle() {
     const { data, error } = await this.supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'google', // Gunakan Google sebagai penyedia login
       options: {
-        redirectTo: window.location.origin
+        redirectTo: window.location.origin // Balik lagi ke halaman utama kita setelah login
       }
     });
     
     if (!error && data.user) {
-      this.currentUser = data.user;
+      this.currentUser = data.user; // Simpan data pengguna yang baru masuk
     }
     
-    return { user: data.user, session: data.session, error };
+    return { user: data.user, session: data.session, error }; // Kembalikan hasilnya
   }
 
-/**
- * Masuk (Sign In) menggunakan Email dan Kata Sandi
- * @param {string} email 
- * Parameter: Alamat email pengguna (berupa teks)
- * @param {string} password 
- * Parameter: Kata sandi pengguna (berupa teks)
- * @returns {Promise<{user, session, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * data {user (pengguna), session (sesi login), atau error (kesalahan)}
- */
+  /**
+   * Masuk (Sign In) pakai Email dan Kata Sandi.
+   * @param {string} email Alamat email pengguna
+   * @param {string} password Kata sandi pengguna
+   * @returns {Promise<{user, session, error}>} Hasilnya adalah data {pengguna, sesi, atau error}
+   */
   async signInWithEmail(email, password) {
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email,
@@ -65,31 +59,26 @@ class SupabaseService {
     });
     
     if (!error && data.user) {
-      this.currentUser = data.user;
+      this.currentUser = data.user; // Simpan data pengguna
     }
     
     return { user: data.user, session: data.session, error };
   }
 
-/**
- * Daftar (Sign Up) menggunakan Email dan Kata Sandi
- * @param {string} email 
- * Parameter: Alamat email pengguna yang baru (berupa teks)
- * @param {string} password 
- * Parameter: Kata sandi yang ingin dibuat pengguna (berupa teks)
- * @param {string} username 
- * Parameter: Nama pengguna/Nama tampilan yang ingin dibuat (berupa teks)
- * @returns {Promise<{user, session, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * data {user (pengguna), session (sesi login), atau error (kesalahan)}
- */
+  /**
+   * Daftar (Sign Up) untuk pengguna baru.
+   * @param {string} email Email yang mau dipakai
+   * @param {string} password Kata sandi yang mau dibuat
+   * @param {string} username Nama tampilan (display name)
+   * @returns {Promise<{user, session, error}>} Hasilnya adalah data {pengguna, sesi, atau error}
+   */
   async signUp(email, password, username) {
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          username: username || `Player${Date.now()}`
+        data: { // Tambahkan data awal, misalnya username
+          username: username || `Player${Date.now()}` // Username default jika kosong
         }
       }
     });
@@ -97,123 +86,109 @@ class SupabaseService {
     return { user: data.user, session: data.session, error };
   }
 
-/**
- * Keluar (Sign Out) dari akun pengguna yang sedang aktif
- * @returns {Promise<{error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {error (kesalahan)} jika proses keluar gagal.
- */
+  /**
+   * Keluar (Sign Out) dari akun yang sedang aktif.
+   * @returns {Promise<{error}>} Hasilnya adalah {error} jika gagal
+   */
   async signOut() {
-    const { error } = await this.supabase.auth.signOut();
-    this.currentUser = null;
+    const { error } = await this.supabase.auth.signOut(); // Proses keluar dari Supabase
+    this.currentUser = null; // Hapus data pengguna lokal
     return { error };
   }
 
-/**
- * Ambil atau dapatkan sesi (session) yang sedang aktif sekarang
- * @returns {Promise<{session, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {session (detail sesi aktif) atau error (kesalahan)}
- */
+  /**
+   * Ambil sesi login yang sedang aktif.
+   * @returns {Promise<{session, error}>} Hasilnya adalah {detail sesi atau error}
+   */
   async getSession() {
-    const { data, error } = await this.supabase.auth.getSession();
+    const { data, error } = await this.supabase.auth.getSession(); // Ambil sesi
     if (data.session) {
-      this.currentUser = data.session.user;
+      this.currentUser = data.session.user; // Simpan pengguna dari sesi
     }
     return { session: data.session, error };
   }
 
-/**
- * Dengarkan perubahan status otentikasi (auth state changes)
- * @param {Function} callback - Dipanggil dengan (kejadian/event, sesi/session)
- * Parameter: Sebuah Fungsi yang akan dipanggil setiap kali status login berubah.
- */
+  /**
+   * Dengarkan setiap ada perubahan status login (misalnya dari log in ke log out).
+   * @param {Function} callback Fungsi yang akan dipanggil saat status berubah
+   */
   onAuthStateChange(callback) {
     return this.supabase.auth.onAuthStateChange(callback);
   }
 
   // ==================== PENGELOLAAN PROFIL ====================
 
-/**
- * Ambil data profil pengguna
- * @param {string} userId - ID Pengguna (opsional, jika kosong akan menggunakan pengguna yang sedang login)
- * @returns {Promise<{profile, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {profile (detail data profil) atau error (kesalahan)}
- */
+  /**
+   * Ambil data profil (username, koin, dll.) pengguna.
+   * @param {string} userId ID pengguna (kalau kosong, pakai pengguna yang lagi login)
+   * @returns {Promise<{profile, error}>} Hasilnya adalah {data profil atau error}
+   */
   async getProfile(userId = null) {
-    const id = userId || this.currentUser?.id;
-    if (!id) return { profile: null, error: new Error('No user ID') };
+    const id = userId || this.currentUser?.id; // Tentukan ID pengguna
+    if (!id) return { profile: null, error: new Error('Tidak ada ID pengguna') };
 
     const { data, error } = await this.supabase
-      .from('profiles')
+      .from('profiles') // Ambil dari tabel 'profiles'
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id) // Filter berdasarkan ID pengguna
+      .single(); // Kita hanya berharap satu hasil
 
     return { profile: data, error };
   }
 
-/**
- * Perbarui data profil pengguna
- * @param {Object} updates - Bidang-bidang (fields) profil yang ingin diperbarui (berupa Objek)
- * @returns {Promise<{profile, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {profile (detail data profil yang sudah diperbarui) atau error (kesalahan)}
- */
+  /**
+   * Perbarui data profil pengguna (misalnya ganti username).
+   * @param {Object} updates Bagian-bagian profil yang mau diubah
+   * @returns {Promise<{profile, error}>} Hasilnya adalah {profil yang sudah diupdate atau error}
+   */
   async updateProfile(updates) {
-    if (!this.currentUser) return { profile: null, error: new Error('Not authenticated') };
+    if (!this.currentUser) return { profile: null, error: new Error('Harus login dulu') };
 
     const { data, error } = await this.supabase
       .from('profiles')
       .update({
-        ...updates,
-        updated_at: new Date().toISOString()
+        ...updates, // Gabungkan perubahan yang diminta
+        updated_at: new Date().toISOString() // Catat waktu update
       })
-      .eq('id', this.currentUser.id)
+      .eq('id', this.currentUser.id) // Pastikan update hanya untuk pengguna ini
       .select()
       .single();
 
     return { profile: data, error };
   }
 
-/**
- * Tambahkan koin ke profil pengguna
- * @param {number} amount - Jumlah koin yang akan ditambahkan (berupa angka)
- * @returns {Promise<{profile, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {profile (detail data profil yang sudah diperbarui) atau error (kesalahan)}
- */
+  /**
+   * Tambahkan koin ke profil pengguna.
+   * @param {number} amount Jumlah koin yang mau ditambahkan
+   * @returns {Promise<{profile, error}>} Hasilnya adalah {profil yang sudah diupdate atau error}
+   */
   async addCoins(amount) {
-    if (!this.currentUser) return { profile: null, error: new Error('Not authenticated') };
+    if (!this.currentUser) return { profile: null, error: new Error('Harus login dulu') };
 
-    // Dapatkan jumlah koin saat ini.
+    // Langkah 1: Ambil koin yang ada sekarang.
     const { profile, error: fetchError } = await this.getProfile();
     if (fetchError) return { profile: null, error: fetchError };
 
-    // Update with new total
+    // Langkah 2: Hitung total baru dan update.
     const newTotal = (profile.total_coins || 0) + amount;
     return await this.updateProfile({ total_coins: newTotal });
   }
 
-  // ==================== LEADERBOARD ====================
+  // ==================== LEADERBOARD (PAPAN SKOR) ====================
 
-/**
- * Kirim skor ke papan peringkat (leaderboard)
- * @param {number} score 
- * Parameter: Nilai skor yang akan dikirim (berupa angka)
- * @returns {Promise<{entry, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {entry (detail entri/pencatatan skor) atau error (kesalahan)}
- */
-  submitScore(score) {
-    if (!this.currentUser) return { entry: null, error: new Error('Not authenticated') };
+  /**
+   * Kirim skor baru ke papan peringkat.
+   * @param {number} score Nilai skor yang akan dicatat
+   * @returns {Promise<{entry, error}>} Hasilnya adalah {detail pencatatan skor atau error}
+   */
+  async submitScore(score) {
+    if (!this.currentUser) return { entry: null, error: new Error('Harus login dulu') };
 
     const { data, error } = await this.supabase
-      .from('leaderboards')
+      .from('leaderboards') // Masukkan ke tabel 'leaderboards'
       .insert({
         user_id: this.currentUser.id,
-        score: Math.floor(score)
+        score: Math.floor(score) // Pastikan skor adalah angka bulat
       })
       .select()
       .single();
@@ -221,23 +196,20 @@ class SupabaseService {
     return { entry: data, error };
   }
 
-/**
- * Ambil skor-skor teratas dari papan peringkat (leaderboard)
- * (Hanya skor terbaik per pemain yang diambil)
- * @param {number} limit - Jumlah entri/data yang mau diambil (berupa angka)
- * @returns {Promise<{leaderboard, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {leaderboard (detail daftar peringkat) atau error (kesalahan)}
- */
+  /**
+   * Ambil daftar skor terbaik global (top scores).
+   * @param {number} limit Jumlah data yang mau diambil (default 100)
+   * @returns {Promise<{leaderboard, error}>} Hasilnya adalah {daftar peringkat atau error}
+   */
   async getLeaderboard(limit = 100) {
-    // Use a view or subquery to get best score per user
+    // Coba pakai fungsi khusus dari database (RPC) untuk efisiensi.
     const { data, error } = await this.supabase.rpc('get_leaderboard', {
-      limit_count: limit
+      limit_count: limit // Kirim batas jumlah data
     });
 
-    // Pakai opsi lain (Fallback) kalau RPC-nya tidak ada (Kode Kesalahan PGRST202) atau fungsinya tidak terdefinisi (Kode Kesalahan 42883).
+    // Kalau RPC gagal (misalnya karena belum disetup di database), pakai cara lama (fallback query).
     if (error && (error.code === '42883' || error.code === 'PGRST202')) {
-      console.warn('RPC function not found, using fallback query');
+      console.warn('Fungsi RPC tidak ditemukan, menggunakan cara cadangan...');
       const { data: allScores, error: fetchError } = await this.supabase
         .from('leaderboards')
         .select(`
@@ -246,11 +218,11 @@ class SupabaseService {
           created_at,
           profiles (username, avatar_id)
         `)
-        .order('score', { ascending: false });
+        .order('score', { ascending: false }); // Urutkan dari skor tertinggi
 
       if (fetchError) return { leaderboard: null, error: fetchError };
 
-      // Kelompokkan berdasarkan ID pengguna (user_id) dan ambil/pertahankan hanya skor terbaik.
+      // Kelompokkan skor: Ambil hanya skor terbaik untuk setiap pengguna.
       const bestScores = {};
       allScores.forEach(entry => {
         const userId = entry.user_id;
@@ -259,7 +231,7 @@ class SupabaseService {
         }
       });
 
-      // Konversi ke bentuk array (larik) lalu urutkan.
+      // Jadikan array lagi, urutkan, dan batasi jumlahnya.
       const leaderboard = Object.values(bestScores)
         .sort((a, b) => b.score - a.score)
         .slice(0, limit);
@@ -267,39 +239,35 @@ class SupabaseService {
       return { leaderboard, error: null };
     }
 
-    return { leaderboard: data, error };
+    return { leaderboard: data, error }; // Kembalikan hasil dari RPC
   }
 
-/**
- * Ambil skor terbaik pribadi (personal best score) milik pengguna
- * @returns {Promise<{bestScore, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {bestScore (nilai skor terbaik) atau error (kesalahan)}
- */
+  /**
+   * Ambil skor terbaik pribadi (Personal Best Score) pengguna yang sedang login.
+   * @returns {Promise<{bestScore, error}>} Hasilnya adalah {nilai skor terbaik atau error}
+   */
   async getPersonalBest() {
     if (!this.currentUser) return { bestScore: 0, error: null };
 
     const { data, error } = await this.supabase
       .from('leaderboards')
       .select('score')
-      .eq('user_id', this.currentUser.id)
-      .order('score', { ascending: false })
+      .eq('user_id', this.currentUser.id) // Hanya milik pengguna ini
+      .order('score', { ascending: false }) // Ambil yang paling besar
       .limit(1)
       .single();
 
-    return { bestScore: data?.score || 0, error };
+    return { bestScore: data?.score || 0, error }; // Kembalikan skor, defaultnya 0
   }
 
- // ==================== INVENTARIS ========================
+  // ==================== INVENTARIS (BARANG) ========================
 
-/**
- * Ambil atau dapatkan daftar inventaris/barang milik pengguna
- * @returns {Promise<{inventory, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {inventory (detail daftar barang) atau error (kesalahan)}
- */
+  /**
+   * Ambil daftar semua barang (inventory) milik pengguna.
+   * @returns {Promise<{inventory, error}>} Hasilnya adalah {daftar barang atau error}
+   */
   async getInventory() {
-    if (!this.currentUser) return { inventory: [], error: new Error('Not authenticated') };
+    if (!this.currentUser) return { inventory: [], error: new Error('Harus login dulu') };
 
     const { data, error } = await this.supabase
       .from('user_inventory')
@@ -309,40 +277,36 @@ class SupabaseService {
     return { inventory: data || [], error };
   }
 
-/**
- * Beli item/barang dan tambahkan ke dalam inventaris
- * @param {string} itemId 
- * Parameter: ID item/barang yang akan dibeli (berupa teks)
- * @param {number} cost 
- * Parameter: Harga item/barang tersebut (berupa angka)
- * @returns {Promise<{item, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {item (detail item yang dibeli) atau error (kesalahan)}
- */
+  /**
+   * Beli barang dan masukkan ke inventaris (sekaligus memotong koin).
+   * @param {string} itemId ID barang yang mau dibeli
+   * @param {number} cost Harga barang
+   * @returns {Promise<{item, error}>} Hasilnya adalah {detail barang yang dibeli atau error}
+   */
   async purchaseItem(itemId, cost) {
-    if (!this.currentUser) return { item: null, error: new Error('Not authenticated') };
+    if (!this.currentUser) return { item: null, error: new Error('Harus login dulu') };
 
-    // Cek apakah koin pengguna cukup.
+    // Langkah 1: Cek koin pengguna.
     const { profile, error: profileError } = await this.getProfile();
     if (profileError) return { item: null, error: profileError };
 
     if ((profile.total_coins || 0) < cost) {
-      return { item: null, error: new Error('Insufficient coins') };
+      return { item: null, error: new Error('Koin tidak cukup!') };
     }
 
-    // kurangi koin
+    // Langkah 2: Kurangi koin.
     const { error: deductError } = await this.updateProfile({
       total_coins: profile.total_coins - cost
     });
     if (deductError) return { item: null, error: deductError };
 
-    // Menambahkan barang menuju inventaris
+    // Langkah 3: Tambahkan barang ke inventaris.
     const { data, error } = await this.supabase
       .from('user_inventory')
       .insert({
         user_id: this.currentUser.id,
         item_id: itemId,
-        is_equipped: false
+        is_equipped: false // Awalnya tidak langsung dipakai
       })
       .select()
       .single();
@@ -350,24 +314,21 @@ class SupabaseService {
     return { item: data, error };
   }
 
-/**
- * Pasang/Pakai (Equip) sebuah item/barang dari inventaris
- * @param {string} itemId 
- * Parameter: ID item/barang yang ingin dipakai (berupa teks)
- * @returns {Promise<{success, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {success (status berhasil) atau error (kesalahan)}
- */
+  /**
+   * Pasang (Equip) sebuah item/barang dari inventaris.
+   * @param {string} itemId ID barang yang mau dipakai
+   * @returns {Promise<{success, error}>} Hasilnya adalah {status berhasil atau error}
+   */
   async equipItem(itemId) {
-    if (!this.currentUser) return { success: false, error: new Error('Not authenticated') };
+    if (!this.currentUser) return { success: false, error: new Error('Harus login dulu') };
 
-    // Lepas semua item/barang dulu.
+    // Langkah 1: Lepas dulu semua item yang sedang dipakai (set `is_equipped: false`).
     await this.supabase
       .from('user_inventory')
       .update({ is_equipped: false })
       .eq('user_id', this.currentUser.id);
 
-    //Pakai (Equip) item/barang yang dipilih
+    // Langkah 2: Pasang (Equip) item yang baru (set `is_equipped: true`).
     const { error } = await this.supabase
       .from('user_inventory')
       .update({ is_equipped: true })
@@ -377,12 +338,10 @@ class SupabaseService {
     return { success: !error, error };
   }
 
-/**
- * Ambil item/barang yang sedang dipakai (equipped) saat ini
- * @returns {Promise<{equippedItem, error}>}
- * Mengembalikan sebuah Promise (Janji) yang akan memberikan Objek yang berisi
- * {equippedItem (detail item yang dipakai) atau error (kesalahan)}
- */
+  /**
+   * Ambil ID item/barang yang sedang dipakai (equipped) saat ini.
+   * @returns {Promise<{equippedItem, error}>} Hasilnya adalah {ID item yang dipakai atau error}
+   */
   async getEquippedItem() {
     if (!this.currentUser) return { equippedItem: null, error: null };
 
@@ -390,13 +349,13 @@ class SupabaseService {
       .from('user_inventory')
       .select('item_id')
       .eq('user_id', this.currentUser.id)
-      .eq('is_equipped', true)
+      .eq('is_equipped', true) // Cari yang statusnya sedang dipakai
       .single();
 
-    return { equippedItem: data?.item_id || 'bebean_std', error };
+    return { equippedItem: data?.item_id || 'bebean_std', error }; // Kembalikan ID item, default 'bebean_std'
   }
 }
 
-// Ekspor (Kirim keluar) instance/objek tunggal
+// Ekspor objek ini biar bisa dipakai di file lain
 export const supabaseService = new SupabaseService();
 export { supabaseService as default };
