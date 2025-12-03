@@ -9,16 +9,16 @@ export class AudioManager {
   }
 
   playBGM() {
-    // Placeholder for BGM logic
-    // In the future, load a BGM file in AssetLoader and play it here
-    // Example:
-    // const bgm = GameManager.instance.assetLoader.getSound("BGM_MAIN");
-    // if (bgm) {
-    //   bgm.loop = true;
-    //   bgm.volume = this.volume * 0.5; // BGM usually quieter
-    //   bgm.play().catch(e => console.log("Audio play failed (user interaction needed)"));
-    //   this.bgm = bgm;
-    // }
+// Tempat sementara buat logika BGM (Musik Latar)
+// Nanti, kita akan ambil file BGM di 'AssetLoader' terus diputar di sini
+// Contohnya:
+// const bgm = GameManager.instance.assetLoader.getSound("BGM_MAIN"); // Ambil suara BGM utama
+// if (bgm) {
+//   bgm.loop = true; // BGM-nya diputar berulang-ulang (looping)
+//   bgm.volume = this.volume * 0.5; // Volume BGM biasanya agak dikecilin (setengahnya)
+//   bgm.play().catch(e => console.log("Gagal putar audio (perlu interaksi dari pengguna)")); // Coba putar, kalau gagal kasih tahu (biasanya karena perlu klik dari pengguna dulu)
+//   this.bgm = bgm; // Simpan objek BGM-nya
+// }
     console.log("🎵 BGM Placeholder: Playing background music...");
   }
 
@@ -34,7 +34,7 @@ export class AudioManager {
 
     const sound = GameManager.instance.assetLoader.getSound(key);
     if (sound) {
-      // Clone to allow overlapping sounds (e.g. rapid coin collection)
+      // Gandakan untuk memungkinkan suara saling tumpang tindih (misalnya, saat cepat-cepat ambil koin).
       const clone = sound.cloneNode(true);
       clone.volume = this.volume;
       clone.play().catch(e => {});
