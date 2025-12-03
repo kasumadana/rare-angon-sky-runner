@@ -3,7 +3,7 @@ import { Storage } from '../utils/Storage.js';
 
 /**
  * Account Manager
- * Handles authentication, profile sync, and leaderboard
+ * Menangani autentikasi, sinkronisasi profil, dan leaderboard
  */
 export class AccountManager {
   constructor(uiManager) {
@@ -23,7 +23,7 @@ export class AccountManager {
       const { profile } = await this.loadProfile();
       this.currentProfile = profile;
       
-      // Sync Inventory
+      // Sinkronkan Inventaris
       await this.syncInventory();
       
       this.updateUI();
@@ -86,7 +86,7 @@ export class AccountManager {
     try {
       const { inventory } = await supabaseService.getInventory();
       if (inventory && inventory.length > 0) {
-        // Update local storage with cloud inventory
+        // memperbarui penyimpanan lokal dengan inventaris cloud
         inventory.forEach(item => {
           Storage.saveOwnedItem(item.item_id);
           if (item.is_equipped) {
@@ -108,7 +108,7 @@ export class AccountManager {
 
     try {
       await this._syncToCloud();
-      await this.syncInventory(); // Also pull latest inventory
+      await this.syncInventory(); // Menarik inventaris terbaru juga
       alert('✅ Data berhasil disinkronkan ke cloud!');
       return true;
     } catch (e) {
@@ -254,7 +254,7 @@ export class AccountManager {
     container.innerHTML = entries.map((entry, index) => {
       const rank = index + 1;
       const rankClass = rank <= 3 ? `top-${rank}` : '';
-      // FIX: Handle nested profiles object correctly
+      // PERBAIKAN: Tangani objek profil dengan benar
       const username = entry.username || entry.profiles?.username || 'Anonymous';
       const avatar = entry.avatar_id || entry.profiles?.avatar_id || 'bebean_std';
       const score = entry.score || 0;
@@ -272,7 +272,7 @@ export class AccountManager {
   }
 
   getAvatarEmoji(avatarId) {
-    // Return HTML for the avatar icon
+    // Mengembalikan HTML untuk ikon avatar
     const avatars = {
       'bebean_std': 'assets/images/kite_bebean.png',
       'pecukan_agile': 'assets/images/kite_pecukan.png',
