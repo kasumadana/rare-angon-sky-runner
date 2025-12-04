@@ -4,19 +4,19 @@ import { ASSETS } from "../utils/Constants.js";
 //Metode khusus yang dipanggil saat objek AssetLoader baru dibuat dan menganalisis properti properti pada objek.
 export class AssetLoader {
   constructor() {
-    this.images = {};
-    this.sounds = {};
-    this.loadedCount = 0;
-    this.totalAssets = 0;
+    this.images = {}; //Membuat objek kosong images untuk menyimpan objek gambar
+    this.sounds = {}; //Membuat objek kosong sounds untuk menyimpan objek audio
+    this.loadedCount = 0; //Menghitung jumlah total aset (gambar dan suara) yang sudah selesai dimuat
+    this.totalAssets = 0; //Menghitung jumlah total aset yang harus dimuat
   }
 
   //Metode utama berjenis async (asinkron) yang mengatur seluruh proses pemuatan.
   async loadAll() {
-    const imageKeys = Object.keys(ASSETS.IMAGES);
-    const soundKeys = Object.keys(ASSETS.SOUNDS);
+    const imageKeys = Object.keys(ASSETS.IMAGES); //Mengambil semua nama kunci aset gambar dari objek ASSETS.IMAGES
+    const soundKeys = Object.keys(ASSETS.SOUNDS); //Mengambil semua nama kunci aset suara dari objek ASSETS.SOUNDS
     
     this.totalAssets = imageKeys.length + soundKeys.length;
-    console.log(`⏳ Starting load of ${this.totalAssets} assets...`);
+    console.log(`⏳ Starting load of ${this.totalAssets} assets...`); //Mencetak pesan ke konsol yang menunjukkan proses pemuatan telah dimulai
 
     const imagePromises = imageKeys.map(key => 
       this.loadImage(key, ASSETS.IMAGES[key])
@@ -28,9 +28,9 @@ export class AssetLoader {
 
     try {
       await Promise.all([...imagePromises, ...soundPromises]);
-      console.log("✅ All assets loaded successfully!");
+      console.log("✅ All assets loaded successfully!"); //Mencetak pesan sukses ke konsol jika semua aset dimuat tanpa kesalahan yang menghentikan proses
     } catch (error) {
-      console.error("⚠️ Some assets failed to load, game will continue with fallbacks.", error);
+      console.error("⚠️ Some assets failed to load, game will continue with fallbacks.", error); //Mencetak pesan peringatan atau kesalahan ke konsol jika ada aset yang gagal dimuat
     }
   }
 
