@@ -1,5 +1,8 @@
+//Menyediakan konstanta penting dan referensi eksternal
+//Mengimpor LANES (jalur) dan GAME_STATE (status game).
 import { LANES, GAME_STATE } from "../utils/Constants.js";
 
+//Menghubungkan ke elemen DOM (HTML) dan GameManager Menghubungkan ke gameManager, debugCanvas (untuk visualisasi AI), dan elemen video (webcam).
 export class InputHandler {
   constructor(gameManager) {
     this.gameManager = gameManager;
@@ -12,6 +15,8 @@ export class InputHandler {
     this.isDetecting = false;
 
     // Cooldown & Smoothing
+    //Mengontrol kecepatan dan stabilitas input.	this.actionCooldown (500ms) mencegah gerakan cepat berlebihan. 
+    //this.detectionInterval (83ms) membatasi deteksi AI menjadi sekitar 12 FPS. this.commandStabilityCounter meningkatkan stabilitas perintah.
     this.lastActionTime = 0;
     this.actionCooldown = 500; // Increased cooldown to prevent rapid switching
     this.lastCommand = null;
@@ -21,10 +26,12 @@ export class InputHandler {
     this.lastDetectionTime = 0;
     this.detectionInterval = 83; // ms
     
-    // Mobile Detection (Check width OR user agent)
+    // Mengoptimalkan performa di perangkat seluler.	this.isMobile digunakan untuk menonaktifkan deteksi AI di ponsel secara otomatis.
     this.isMobile = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
+  //Memulai semua mekanisme input.	Selalu memanggil _setupKeyboardTouch. 
+  //Jika bukan mobile, ia mencoba memanggil _setupWebcam() dan _loadModel() dengan mekanisme timeout 5 detik sebagai fallback ke input manual jika inisialisasi gagal.
   async init() {
     this._setupKeyboardTouch();
     
@@ -64,6 +71,8 @@ export class InputHandler {
     }
   }
 
+  //Mengaktifkan proses deteksi AI.	Mengatur this.isDetecting = true dan memulai perulangan _detectionLoop().
+  //Memperbarui status UI webcam menjadi "Mendeteksi Gestur...".
   startDetection() {
     // Never start detection on mobile
     if (this.isMobile) return;
@@ -78,6 +87,8 @@ export class InputHandler {
     }
   }
 
+  //Menonaktifkan deteksi AI.	
+  //Mengatur this.isDetecting = false, membersihkan debug canvas, dan mengatur status UI webcam menjadi "Siaga".
   stopDetection() {
     this.isDetecting = false;
     if (this.debugCtx && this.debugCanvas) {
@@ -90,6 +101,8 @@ export class InputHandler {
     if (dotEl) dotEl.style.display = "none";
   }
 
+  //Mengatur event listener untuk input tradisional.	Keyboard: Menggunakan tombol panah (ArrowLeft, ArrowRight) atau (a, d) untuk memanggil player.moveLeft() atau player.moveRight().
+  //Sentuhan: Menghubungkan tombol UI virtual (.d-btn) ke fungsi gerakan pemain, menggunakan preventDefault() untuk sentuhan/klik.
   _setupKeyboardTouch() {
     // Keyboard
     window.addEventListener("keydown", (e) => {
@@ -137,6 +150,7 @@ export class InputHandler {
     }
   }
 
+  //Mengakses kamera perangkat.	Meminta izin pengguna melalui getUserMedia dan menghubungkan aliran video ke elemen <video>.
   async _setupWebcam() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
       throw new Error("No Webcam");
@@ -155,6 +169,8 @@ export class InputHandler {
     });
   }
 
+  //Memuat model Machine Learning untuk pengenalan tangan.	
+  //Memuat model Handpose (atau sejenisnya) dari pustaka eksternal (misalnya, TensorFlow.js) ke dalam this.model.
   async _loadModel() {
     this.model = await handpose.load({
         detectionConfidence: 0.8,
@@ -163,6 +179,8 @@ export class InputHandler {
     });
   }
 
+  //Perulangan utama yang menjalankan inferensi AI.	Menggunakan requestAnimationFrame tetapi di-throttle oleh this.detectionInterval (83ms) untuk menghemat daya.
+  //Memanggil this.model.estimateHands(this.video) untuk mendeteksi landmark.
   _detectionLoop() {
     if (!this.isDetecting) return;
 
@@ -192,6 +210,9 @@ export class InputHandler {
     detect();
   }
 
+  //Menerjemahkan landmark tangan menjadi perintah game.	Logika Gestur: Menghitung jumlah jari yang terentang (berdasarkan perbandingan koordinat Y ujung dan pangkal jari). 
+  //Perintah: Menerjemahkan jumlah jari (1, 2, atau 3) menjadi Jalur (Kiri, Tengah, Kanan). 
+  //Stabilitas: Menggunakan commandStabilityCounter untuk memastikan gestur stabil selama beberapa frame sebelum mengeksekusi perintah gerak (player.moveLeft/moveRight) untuk meminimalkan noise
   _processGesture(landmarks) {
     const now = Date.now();
     
@@ -258,6 +279,8 @@ export class InputHandler {
     }
   }
 
+  //Visualisasi debugging.	Menggambar kerangka 21 landmark tangan yang terdeteksi, termasuk koneksi antar jari, di debug canvas.
+  //Ini juga menampilkan nama gestur yang terdeteksi (misalnya, "3 JARI (KANAN)") di atas video.
   _drawSkeleton(landmarks) {
     const ctx = this.debugCtx;
     const w = this.debugCanvas.width;
