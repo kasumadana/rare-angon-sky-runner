@@ -11,15 +11,15 @@ export class AssetLoader {
   async loadAll() {
     const imageKeys = Object.keys(ASSETS.IMAGES);
     const soundKeys = Object.keys(ASSETS.SOUNDS);
-    
+
     this.totalAssets = imageKeys.length + soundKeys.length;
     console.log(`⏳ Starting load of ${this.totalAssets} assets...`);
 
-    const imagePromises = imageKeys.map(key => 
+    const imagePromises = imageKeys.map((key) =>
       this.loadImage(key, ASSETS.IMAGES[key])
     );
-    
-    const soundPromises = soundKeys.map(key => 
+
+    const soundPromises = soundKeys.map((key) =>
       this.loadSound(key, ASSETS.SOUNDS[key])
     );
 
@@ -27,7 +27,10 @@ export class AssetLoader {
       await Promise.all([...imagePromises, ...soundPromises]);
       console.log("✅ All assets loaded successfully!");
     } catch (error) {
-      console.error("⚠️ Some assets failed to load, game will continue with fallbacks.", error);
+      console.error(
+        "⚠️ Some assets failed to load, game will continue with fallbacks.",
+        error
+      );
     }
   }
 
@@ -65,9 +68,9 @@ export class AssetLoader {
         this.loadedCount++;
         resolve(null);
       };
-      
+
       // Setup for loading
-      audio.preload = 'auto';
+      audio.preload = "auto";
       audio.src = url;
       audio.load();
 

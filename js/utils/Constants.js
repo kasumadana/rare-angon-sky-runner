@@ -83,8 +83,8 @@ export const SPRITES = {
     HEIGHT: 50
   },
   PLAYER: {
-    WIDTH: 110,
-    HEIGHT: 110
+    WIDTH: 120,
+    HEIGHT: 120
   },
   COIN: {
     WIDTH: 40,
