@@ -1,6 +1,6 @@
 /**
- * Generic Object Pool for game entities
- * Reduces garbage collection overhead by reusing objects
+ * Object Pool Generik untuk entitas game
+ * Mengurangi beban garbage collection dengan menggunakan kembali objek
  */
 export class ObjectPool {
   constructor(ClassType, initialSize = 50) {
@@ -9,29 +9,29 @@ export class ObjectPool {
     this.active = [];
     this.initialSize = initialSize;
     
-    // Don't pre-allocate - objects need constructor params
-    // Will create on-demand in acquire()
+    // Jangan alokasi awal - objek butuh parameter konstruktor
+    // Akan dibuat sesuai permintaan di acquire()
   }
 
   /**
-   * Get an object from the pool
-   * @param {...any} args - Constructor arguments for the object
-   * @returns {Object} Reused or new object
+   * Mengambil objek dari pool
+   * @param {...any} args - Argumen konstruktor untuk objek
+   * @returns {Object} Objek yang digunakan kembali atau baru
    */
   acquire(...args) {
     let obj;
     
     if (this.pool.length > 0) {
       obj = this.pool.pop();
-      // Reset object with new parameters
+      // Reset objek dengan parameter baru
       if (obj.reset) {
         obj.reset(...args);
       } else {
-        // Fallback: manually reinitialize
+        // Fallback: inisialisasi ulang secara manual
         Object.assign(obj, new this.ClassType(...args));
       }
     } else {
-      // Pool exhausted, create new object
+      // Pool habis, buat objek baru
       obj = new this.ClassType(...args);
     }
     
@@ -40,8 +40,8 @@ export class ObjectPool {
   }
 
   /**
-   * Return an object to the pool
-   * @param {Object} obj - Object to release
+   * Mengembalikan objek ke pool
+   * @param {Object} obj - Objek yang akan dilepas
    */
   release(obj) {
     const index = this.active.indexOf(obj);
@@ -52,10 +52,10 @@ export class ObjectPool {
   }
 
   /**
-   * Release all active objects back to pool
+   * Melepaskan semua objek aktif kembali ke pool
    */
   releaseAll() {
-    // Reset markedForDeletion flag for all active objects
+    // Reset flag markedForDeletion untuk semua objek aktif
     for (const obj of this.active) {
       obj.markedForDeletion = false;
     }
@@ -64,11 +64,11 @@ export class ObjectPool {
   }
 
   /**
-   * Update all active objects
-   * @param {number} dt - Delta time
+   * Memperbarui semua objek aktif
+   * @param {number} dt - Delta time (waktu yang berlalu)
    */
   updateAll(dt) {
-    // Reverse iteration for safe removal
+    // Iterasi terbalik untuk penghapusan yang aman
     for (let i = this.active.length - 1; i >= 0; i--) {
       const obj = this.active[i];
       obj.update(dt);
@@ -80,8 +80,8 @@ export class ObjectPool {
   }
 
   /**
-   * Draw all active objects
-   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * Menggambar semua objek aktif
+   * @param {CanvasRenderingContext2D} ctx - Konteks kanvas
    */
   drawAll(ctx) {
     for (const obj of this.active) {
@@ -90,16 +90,16 @@ export class ObjectPool {
   }
 
   /**
-   * Get all active objects
-   * @returns {Array} Active objects
+   * Mendapatkan semua objek aktif
+   * @returns {Array} Daftar objek aktif
    */
   getActive() {
     return this.active;
   }
 
   /**
-   * Get pool statistics
-   * @returns {Object} Pool stats
+   * Mendapatkan statistik pool
+   * @returns {Object} Statistik pool (pooled, active, total)
    */
   getStats() {
     return {
