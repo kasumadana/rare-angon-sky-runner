@@ -2,31 +2,43 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
     <!-- Content Security Policy: Allow unsafe-eval for TensorFlow.js -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;">
-    
-    <title>Rare Angon: The Sky Runner</title>
-    
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;"
+    />
+
+    <title>Rare Angon: The Sky Running</title>
+
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/images/item_coin.png">
-    
+    <link rel="icon" type="image/png" href="assets/images/item_coin.png" />
+
     <!-- Pixel Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
-    
+
     <!-- Game Entry Point -->
     <script type="module" src="js/main.js"></script>
     <link rel="stylesheet" href="style.css" />
@@ -35,7 +47,7 @@
     <div id="game-container">
       <!-- Retro Scanline Effect -->
       <div class="scanlines"></div>
-      
+
       <!-- Main Game Canvas -->
       <canvas id="gameCanvas"></canvas>
 
@@ -49,7 +61,7 @@
           <div class="hud-row">
             <span class="hud-label">KOIN</span>
             <div class="coin-display">
-              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C" />
               <span id="hud-coin" class="hud-value">0</span>
             </div>
           </div>
@@ -66,29 +78,37 @@
       </div>
 
       <!-- Main Menu -->
-      <div id="screen-menu" class="overlay-screen flex-center" style="display: none">
+      <div
+        id="screen-menu"
+        class="overlay-screen flex-center"
+        style="display: none"
+      >
         <div class="menu-content">
           <div class="logo-container">
-            <img src="assets/images/logo.png" alt="Rare Angon Logo" class="game-logo">
+            <img
+              src="assets/images/logo.png"
+              alt="Rare Angon Logo"
+              class="game-logo"
+            />
           </div>
-          
+
           <div class="stats-bar">
-            <div id="user-profile" class="stat-pill" style="display: none;">
+            <div id="user-profile" class="stat-pill" style="display: none">
               <span class="icon"><i class="fas fa-user"></i></span>
               <span id="user-name">Guest</span>
             </div>
-            
+
             <div class="stat-pill gold">
-              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C" />
               <span id="menu-coins">0</span>
             </div>
           </div>
-          
+
           <div class="menu-grid">
             <button id="btn-start" class="btn-retro primary btn-lg">
               <span><i class="fas fa-play"></i> TERBANG</span>
             </button>
-            
+
             <div class="btn-row">
               <button id="btn-shop" class="btn-retro secondary">
                 <span><i class="fas fa-shopping-cart"></i> WARUNG</span>
@@ -97,44 +117,68 @@
                 <span><i class="fas fa-trophy"></i> SKOR</span>
               </button>
             </div>
-            
+
             <button id="btn-account" class="btn-retro tertiary">
-              <span id="btn-account-text"><i class="fas fa-user-circle"></i> MASUK</span>
+              <span id="btn-account-text"
+                ><i class="fas fa-user-circle"></i> MASUK</span
+              >
             </button>
           </div>
 
           <div class="hint-box">
             <p><i class="fas fa-gamepad"></i> KONTROL TANGAN</p>
             <div class="gestures">
-              <div class="gesture-item"><img src="assets/images/one-finger.png" alt="1 Finger"><small>KIRI (1)</small></div>
-              <div class="gesture-item"><img src="assets/images/two-fingers.png" alt="2 Fingers"><small>TENGAH (2)</small></div>
-              <div class="gesture-item"><img src="assets/images/three-fingers.png" alt="3 Fingers"><small>KANAN (3)</small></div>
+              <div class="gesture-item">
+                <img src="assets/images/one-finger.png" alt="1 Finger" /><small
+                  >KIRI (1)</small
+                >
+              </div>
+              <div class="gesture-item">
+                <img
+                  src="assets/images/two-fingers.png"
+                  alt="2 Fingers"
+                /><small>TENGAH (2)</small>
+              </div>
+              <div class="gesture-item">
+                <img
+                  src="assets/images/three-fingers.png"
+                  alt="3 Fingers"
+                /><small>KANAN (3)</small>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Shop Screen -->
-      <div id="screen-shop" class="overlay-screen flex-center" style="display: none">
+      <div
+        id="screen-shop"
+        class="overlay-screen flex-center"
+        style="display: none"
+      >
         <div class="panel shop-panel">
           <div class="panel-header">
             <h2><i class="fas fa-store"></i> WARUNG</h2>
             <div class="stat-pill gold">
-              <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+              <img src="assets/images/item_coin.png" class="icon-sm" alt="C" />
               <span id="shop-coins">0</span>
             </div>
           </div>
-          
+
           <div class="shop-carousel">
-            <button id="btn-shop-prev" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
-            
+            <button id="btn-shop-prev" class="nav-btn">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+
             <div id="shop-item-display" class="shop-card-large">
               <!-- Injected by JS -->
             </div>
-            
-            <button id="btn-shop-next" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+
+            <button id="btn-shop-next" class="nav-btn">
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
-          
+
           <button id="btn-shop-back" class="btn-retro secondary btn-wide">
             <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
@@ -142,10 +186,14 @@
       </div>
 
       <!-- Game Over Screen -->
-      <div id="screen-gameover" class="overlay-screen flex-center" style="display: none">
+      <div
+        id="screen-gameover"
+        class="overlay-screen flex-center"
+        style="display: none"
+      >
         <div class="panel gameover-panel">
           <h1 class="danger-text blink"><i class="fas fa-bomb"></i> PEGAT!</h1>
-          
+
           <div class="results-grid">
             <div class="result-item">
               <span class="label">SKOR</span>
@@ -158,12 +206,16 @@
             <div class="result-item">
               <span class="label">KOIN</span>
               <div class="coin-val">
-                <img src="assets/images/item_coin.png" class="icon-sm" alt="C">
+                <img
+                  src="assets/images/item_coin.png"
+                  class="icon-sm"
+                  alt="C"
+                />
                 <span id="go-coin">0</span>
               </div>
             </div>
           </div>
-          
+
           <div class="action-buttons">
             <button id="btn-restart" class="btn-retro primary btn-wide">
               <i class="fas fa-redo"></i> MAIN LAGI
@@ -176,7 +228,11 @@
       </div>
 
       <!-- Account Screen -->
-      <div id="screen-account" class="overlay-screen flex-center" style="display: none">
+      <div
+        id="screen-account"
+        class="overlay-screen flex-center"
+        style="display: none"
+      >
         <div class="panel account-panel-wrapper">
           <!-- Not Logged In -->
           <div id="account-login" class="account-content">
@@ -184,29 +240,44 @@
             <p class="info-text">
               Simpan progres, akses leaderboard global, dan sinkronisasi data!
             </p>
-            
+
             <button id="btn-google-login" class="btn-retro google-btn">
-              <span class="icon"><i class="fab fa-google"></i></span> MASUK DENGAN GOOGLE
+              <span class="icon"><i class="fab fa-google"></i></span> MASUK
+              DENGAN GOOGLE
             </button>
-            
+
             <button id="btn-account-back" class="btn-retro secondary btn-wide">
               <i class="fas fa-arrow-left"></i> KEMBALI
             </button>
           </div>
-          
+
           <!-- Logged In -->
-          <div id="account-profile" class="account-content" style="display: none;">
+          <div
+            id="account-profile"
+            class="account-content"
+            style="display: none"
+          >
             <h2><i class="fas fa-user-circle"></i> PROFIL PEMAIN</h2>
-            
+
             <div class="profile-card">
               <div class="profile-field">
                 <label for="profile-username-input">NAMA</label>
                 <div class="input-group">
-                  <input type="text" id="profile-username-input" maxlength="15" />
-                  <button id="btn-save-username" class="btn-icon" aria-label="Simpan Nama"><i class="fas fa-save"></i></button>
+                  <input
+                    type="text"
+                    id="profile-username-input"
+                    maxlength="15"
+                  />
+                  <button
+                    id="btn-save-username"
+                    class="btn-icon"
+                    aria-label="Simpan Nama"
+                  >
+                    <i class="fas fa-save"></i>
+                  </button>
                 </div>
               </div>
-              
+
               <div class="profile-stats-row">
                 <div class="stat-box">
                   <label>KOIN</label>
@@ -217,13 +288,13 @@
                   <span id="profile-best">0</span>
                 </div>
               </div>
-              
+
               <div class="profile-field">
                 <label>EMAIL</label>
                 <span id="profile-email" class="email-text">-</span>
               </div>
             </div>
-            
+
             <div class="profile-actions">
               <button id="btn-sync-data" class="btn-retro primary">
                 <i class="fas fa-sync"></i> SINKRON
@@ -232,7 +303,7 @@
                 <i class="fas fa-sign-out-alt"></i> KELUAR
               </button>
             </div>
-            
+
             <button id="btn-profile-back" class="btn-retro secondary btn-wide">
               <i class="fas fa-arrow-left"></i> KEMBALI
             </button>
@@ -241,44 +312,82 @@
       </div>
 
       <!-- Leaderboard Screen -->
-      <div id="screen-leaderboard" class="overlay-screen flex-center" style="display: none">
+      <div
+        id="screen-leaderboard"
+        class="overlay-screen flex-center"
+        style="display: none"
+      >
         <div class="panel leaderboard-panel">
           <h2><i class="fas fa-trophy"></i> PAPAN SKOR</h2>
-          
+
           <div class="tab-container">
-            <button class="tab-btn active" data-tab="global"><i class="fas fa-globe"></i> GLOBAL</button>
-            <button class="tab-btn" data-tab="personal"><i class="fas fa-user"></i> SAYA</button>
+            <button class="tab-btn active" data-tab="global">
+              <i class="fas fa-globe"></i> GLOBAL
+            </button>
+            <button class="tab-btn" data-tab="personal">
+              <i class="fas fa-user"></i> SAYA
+            </button>
           </div>
-          
+
           <div class="leaderboard-scroll">
             <div id="leaderboard-content" class="leaderboard-list">
-              <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
+              <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Memuat...
+              </div>
             </div>
           </div>
-          
-          <button id="btn-leaderboard-back" class="btn-retro secondary btn-wide">
+
+          <button
+            id="btn-leaderboard-back"
+            class="btn-retro secondary btn-wide"
+          >
             <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
         </div>
       </div>
 
       <!-- Webcam Container -->
-      <div class="webcam-container" style="display: none;">
+      <div class="webcam-container" style="display: none">
         <div class="rec-badge">AI CAM</div>
-        <div class="cam-status" style="position: absolute; bottom: 2px; left: 5px; font-size: 8px; color: white; z-index: 10;">Siaga</div>
-        <div class="rec-dot" style="position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: red; border-radius: 50%; display: none; z-index: 10;"></div>
+        <div
+          class="cam-status"
+          style="
+            position: absolute;
+            bottom: 2px;
+            left: 5px;
+            font-size: 8px;
+            color: white;
+            z-index: 10;
+          "
+        >
+          Siaga
+        </div>
+        <div
+          class="rec-dot"
+          style="
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background: red;
+            border-radius: 50%;
+            display: none;
+            z-index: 10;
+          "
+        ></div>
         <video id="webcam" playsinline></video>
         <canvas id="debugCanvas"></canvas>
       </div>
     </div>
 
     <!-- Mobile Controls -->
-    <div id="mobile-controls" style="display: none;">
+    <div id="mobile-controls" style="display: none">
       <div class="d-btn left" aria-label="Kiri">
-        <img src="assets/images/ui_arrow.png" alt="<">
+        <img src="assets/images/ui_arrow.png" alt="<" />
       </div>
       <div class="d-btn right" aria-label="Kanan">
-        <img src="assets/images/ui_arrow.png" alt=">">
+        <img src="assets/images/ui_arrow.png" alt=">" />
       </div>
     </div>
   </body>

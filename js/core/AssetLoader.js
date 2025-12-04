@@ -1,19 +1,22 @@
+//pernyataan import dari JavaScript untuk mengambil objek dari assets berkas.
 import { ASSETS } from "../utils/Constants.js";
 
+//Metode khusus yang dipanggil saat objek AssetLoader baru dibuat dan menganalisis properti properti pada objek.
 export class AssetLoader {
   constructor() {
-    this.images = {};
-    this.sounds = {};
-    this.loadedCount = 0;
-    this.totalAssets = 0;
+    this.images = {}; //Membuat objek kosong images untuk menyimpan objek gambar
+    this.sounds = {}; //Membuat objek kosong sounds untuk menyimpan objek audio
+    this.loadedCount = 0; //Menghitung jumlah total aset (gambar dan suara) yang sudah selesai dimuat
+    this.totalAssets = 0; //Menghitung jumlah total aset yang harus dimuat
   }
 
+  //Metode utama berjenis async (asinkron) yang mengatur seluruh proses pemuatan.
   async loadAll() {
     const imageKeys = Object.keys(ASSETS.IMAGES);
     const soundKeys = Object.keys(ASSETS.SOUNDS);
 
     this.totalAssets = imageKeys.length + soundKeys.length;
-    console.log(`⏳ Starting load of ${this.totalAssets} assets...`);
+    console.log(`⏳ Starting load of ${this.totalAssets} assets...`); //Mencetak pesan ke konsol yang menunjukkan proses pemuatan telah dimulai
 
     const imagePromises = imageKeys.map((key) =>
       this.loadImage(key, ASSETS.IMAGES[key])
@@ -25,7 +28,7 @@ export class AssetLoader {
 
     try {
       await Promise.all([...imagePromises, ...soundPromises]);
-      console.log("✅ All assets loaded successfully!");
+      console.log("✅ All assets loaded successfully!"); //Mencetak pesan sukses ke konsol jika semua aset dimuat tanpa kesalahan yang menghentikan proses
     } catch (error) {
       console.error(
         "⚠️ Some assets failed to load, game will continue with fallbacks.",
@@ -34,6 +37,7 @@ export class AssetLoader {
     }
   }
 
+  //Metode yang memuat satu berkas gambar, mengembalikan sebuah Promise dan dapat membuat objek image baru.
   loadImage(key, url) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -53,6 +57,7 @@ export class AssetLoader {
     });
   }
 
+  //Metode yang memuat satu berkas suara, mengembalikan sebuah Promise dan dapat membuat objek audio baru.
   loadSound(key, url) {
     return new Promise((resolve) => {
       const audio = new Audio();
@@ -85,10 +90,12 @@ export class AssetLoader {
     });
   }
 
+  //Metode getter sederhana untuk mengamnbil objek image yang sudah dimuat dari koleksi this.image.
   getImage(key) {
     return this.images[key];
   }
 
+  //Metode getter sederhana untuk mengambil objek audio yang sudah dimuat dari koleksi this.sounds.
   getSound(key) {
     return this.sounds[key];
   }
