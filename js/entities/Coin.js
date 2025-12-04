@@ -1,6 +1,10 @@
+//Menyediakan konstanta dan akses ke Manajer Game.	Mengimpor CONFIG, PALETTE, 
+//SPRITES (untuk dimensi) dan GameManager (untuk mengakses AssetLoader).
 import { CONFIG, PALETTE, SPRITES } from "../utils/Constants.js";
 import { GameManager } from "../core/GameManager.js";
 
+//Menginisialisasi atau mengatur ulang status koin.	Dipanggil saat objek dibuat atau diambil dari Object Pool.
+//Menetapkan dimensi, jalur (laneIndex), kecepatan, dan posisi Y awal di luar layar.
 export class Coin {
   constructor(laneIndex = 0, speed = 250) {
     this.reset(laneIndex, speed);
@@ -10,7 +14,8 @@ export class Coin {
     this.width = SPRITES.COIN.WIDTH;
     this.height = SPRITES.COIN.HEIGHT;
 
-    // Reset position - will be calculated in first update
+    //Mengontrol lifecycle koin.	this.markedForDeletion menandai koin untuk dikembalikan ke pool.
+    //this.needsPositionInit memastikan posisi X di jalur dihitung hanya sekali.
     this.laneIndex = laneIndex;
     this.x = 0;
     this.y = -150;
@@ -20,6 +25,9 @@ export class Coin {
     this.needsPositionInit = true; // ALWAYS reset this flag
   }
 
+  //Logika pergerakan dan lifecycle koin per frame.	Perhitungan Posisi X: Pada update pertama, menghitung posisi X koin yang tepat berdasarkan laneIndex dan lebar jalur (CONFIG.LANE_WIDTH). 
+  //Pergerakan Y: Menggerakkan koin ke bawah (this.y += this.speed * dt) secara frame-rate-independen. 
+  //Pemeriksaan Batas: Mengatur this.markedForDeletion = true jika koin telah melewati batas bawah layar.
   update(dt) {
     // Initialize position on first update
     if (this.needsPositionInit) {
@@ -37,11 +45,15 @@ export class Coin {
     }
   }
 
+  //Memeriksa tabrakan antara koin dan pemain.	Menggunakan Math.hypot untuk menghitung jarak pusat-ke-pusat antara koin dan pemain. 
+  //Jika jarak ini kurang dari jumlah jari-jari keduanya, maka dianggap terjadi tabrakan (lingkaran).
   checkCollision(player) {
     const dist = Math.hypot(this.x - player.x, this.y - player.y);
     return dist < this.width / 2 + player.width / 2;
   }
 
+  //Menggambar visual koin di Canvas.	Menggunakan ctx.save() dan ctx.translate() untuk memindahkan titik asal gambar ke posisi koin (this.x, this.y) sebelum menggambar. 
+  //Mengambil aset gambar ("ITEM_COIN") dari GameManager.instance.assetLoader.
   draw(ctx) {
     ctx.save();
     ctx.translate(this.x, this.y);
@@ -57,7 +69,9 @@ export class Coin {
 
     ctx.restore();
   }
-  
+
+  //Menghadirkan koin jika gambar aset gagal dimuat.	
+  //Menggambar bentuk koin sederhana (lingkaran kuning emas dengan sedikit detail) menggunakan fungsi gambar dasar Canvas API.
   drawFallback(ctx) {
     // Koin Emas
     ctx.fillStyle = PALETTE.COIN;

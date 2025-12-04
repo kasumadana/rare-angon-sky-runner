@@ -1,3 +1,4 @@
+//Mendefinisikan ketergantungan (dependensi) kelas GameManager seperti Mengimpor Konstanta (GAME_STATE, CONFIG), Entitas (Player, Obstacle, Coin), dan Manajer Layanan (InputHandler, UIManager, AssetLoader, dll.).
 import {
   GAME_STATE,
   CONFIG,
@@ -13,6 +14,7 @@ import { AssetLoader } from "./AssetLoader.js";
 import { Storage } from "../utils/Storage.js";
 import { ObjectPool } from "../utils/ObjectPool.js";
 
+//Inisialisasi objek game dan komponen dasarnya serta Menerapkan pola Singleton. Menetapkan Canvas, Context (CTX), status awal (LOADING), skor, dan kecepatan dasar.
 export class GameManager {
   constructor() {
     if (GameManager.instance) return GameManager.instance;
@@ -49,6 +51,7 @@ export class GameManager {
     this.clouds = [];
   }
 
+  //Mengelola objek berulang (rintangan dan koin) secara efisien Menggunakan ObjectPool untuk menghindari overhead pembuatan objek baru berulang kali, meningkatkan performa.
   async init() {
     this.resize();
     window.addEventListener("resize", () => this.resize());
@@ -65,6 +68,7 @@ export class GameManager {
       console.error("❌ Initialization failed:", e);
     }
 
+    //Menciptakan latar belakang dinamis Mengisi array this.clouds dengan awan acak (posisi, kecepatan, tipe) untuk memberikan latar belakang yang bergerak.
     this.initClouds();
 
     this.uiManager.showLoading(false);
@@ -88,6 +92,7 @@ export class GameManager {
     }
   }
 
+  //Adaptasi Responsif yang menyesuaikan dimensi Canvas game agar selalu sesuai dengan ukuran jendela/layar pemain.
   resize() {
     this.canvas.width = this.canvas.clientWidth;
     this.canvas.height = this.canvas.clientHeight;
@@ -98,6 +103,9 @@ export class GameManager {
     }
   }
 
+  //Mengatur aliran (flow) game 
+  //Mengubah this.currentState dan memicu perubahan UI yang sesuai. 
+  //Memicu fungsi playBGM, resetGame, dan kontrol deteksi input berdasarkan status baru (e.g., PLAYING, MENU, GAMEOVER).
   changeState(newState) {
     console.log(`State change: ${this.currentState} -> ${newState}`);
     this.currentState = newState;
@@ -118,6 +126,8 @@ export class GameManager {
     }
   }
 
+  //Menyiapkan game untuk sesi bermain baru
+  //Mengatur ulang skor dan kecepatan, melepaskan semua rintangan/koin aktif kembali ke pool, dan membuat instance Player baru.
   resetGame() {
     this.score = 0;
     this.coinsCollected = 0;
@@ -131,6 +141,8 @@ export class GameManager {
     this.timers = { spawn: 0, coinSpawn: 0 };
   }
 
+  //Mengontrol output audio game
+  //Memainkan efek suara (dengan klon agar bisa tumpang tindih) dan mengatur/menghentikan Musik Latar Belakang (BGM) dengan fitur loop dan kontrol volume.
   playSFX(key) {
     const sound = this.assetLoader.getSound(key);
     if (sound) {
@@ -164,6 +176,8 @@ export class GameManager {
     }
   }
 
+  //Inti operasional game (perulangan utama), Memastikan game berjalan lancar
+  //Menghitung Delta Time (dt), memastikan pergerakan frame-rate-independen, lalu memanggil update dan draw
   loop(timestamp) {
     if (!this.lastTime) this.lastTime = timestamp;
     const dt = (timestamp - this.lastTime) / 1000;
@@ -177,6 +191,8 @@ export class GameManager {
     requestAnimationFrame(this.loop);
   }
 
+  //Logika dan perhitungan game
+  //Meningkatkan gameSpeed dan skor. Mengelola logika Spawners (memunculkan rintangan/koin baru). Memeriksa Collisions (tabrakan) antara pemain dan rintangan/koin
   update(dt) {
     // Always update clouds for dynamic background
     this.updateClouds(dt);
@@ -245,6 +261,8 @@ export class GameManager {
     });
   }
 
+  //Logika setelah kekalahan
+  //Memeriksa dan memperbarui High Score. Menyinkronkan data ke cloud (jika login). Mengubah status game menjadi GAMEOVER
   async handleGameOver() {
     const highScore = Storage.getHighScore();
     const finalScore = Math.floor(this.score);
@@ -265,6 +283,8 @@ export class GameManager {
     this.changeState(GAME_STATE.GAMEOVER);
   }
 
+  //Penggambaran visual game
+  //Membersihkan Canvas, menggambar latar belakang (gradient langit), menggambar awan, koin, rintangan, dan pemain.
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
