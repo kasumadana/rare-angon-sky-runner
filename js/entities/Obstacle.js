@@ -105,7 +105,7 @@ export class Obstacle {
     if (this.type === OBSTACLE_TYPE.BIRD) {
       // Draw Animated Bird
       // Get frame key from SPRITES config
-      //Menggambar Burung yang bergerak.	Menggunakan SPRITES.BIRD.FRAMES[this.currentFrame] untuk memilih frame sprite yang sesuai dengan animasi saat ini.
+      //Menggambar Burung yang bergerak. Menggunakan SPRITES.BIRD.FRAMES[this.currentFrame] untuk memilih frame sprite yang sesuai dengan animasi saat ini.
       const frameKey = SPRITES.BIRD.FRAMES[this.currentFrame];
       const img = GameManager.instance.assetLoader.getImage(frameKey);
       
@@ -127,7 +127,7 @@ export class Obstacle {
     ctx.restore();
   }
 
-  //Gambar alternatif jika aset Burung gagal dimuat.	Menggambar bentuk lingkaran hitam sederhana (seperti siluet burung) dengan mata merah.
+  //Gambar alternatif jika aset Burung gagal dimuat. Menggambar bentuk lingkaran hitam sederhana (seperti siluet burung) dengan mata merah.
   drawFallbackBird(ctx) {
     ctx.fillStyle = "#333";
     ctx.beginPath();
