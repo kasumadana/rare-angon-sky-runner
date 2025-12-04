@@ -5,8 +5,8 @@ import { GameManager } from "../core/GameManager.js";
 //Menghitung posisi X awal di tengah layar (canvasWidth / 2) dan posisi Y awal di bagian bawah layar (CONFIG.CANVAS_HEIGHT - 150).
 export class Player {
   constructor(skinId = "bebean_std") {
-    this.width = SPRITES.PLAYER.WIDTH;
-    this.height = SPRITES.PLAYER.HEIGHT;
+    this.width = SPRITES.PLAYER.WIDTH; // Menetapkan lebar visual pemain berdasarkan konstanta SPRITES.
+    this.height = SPRITES.PLAYER.HEIGHT; // Menetapkan tinggi visual pemain berdasarkan konstanta SPRITES.
     
     // FIX: Use dynamic canvas width if available, else fallback to CONFIG
     const canvas = document.getElementById('gameCanvas');
@@ -20,16 +20,16 @@ export class Player {
     this.targetX = this.x;
 
     //Mengelola tampilan visual pemain.	this.skinId (ID yang dipilih pengguna, mis. 'bebean_std'). this.skinKey (kunci aset yang sesuai, mis. 'SKIN_BEBEAN') yang didapatkan melalui _getSkinKey.
-    this.skinId = skinId;
-    this.skinKey = this._getSkinKey(skinId);
+    this.skinId = skinId; // Menetapkan ID skin yang dipilih (misalnya 'bebean_std').
+    this.skinKey = this._getSkinKey(skinId); // Menerjemahkan skinId menjadi kunci aset yang sebenarnya (misalnya 'SKIN_BEBEAN') untuk memuat gambar.
   }
 
   //Penerjemah ID SkinMenerjemahkan ID skin yang ramah pengguna ('pecukan_agile') menjadi kunci aset yang dapat digunakan untuk memuat gambar ('SKIN_PECUKAN').
   _getSkinKey(id) {
     switch(id) {
-      case 'pecukan_agile': return 'SKIN_PECUKAN';
-      case 'janggan_legend': return 'SKIN_KUWIR';
-      default: return 'SKIN_BEBEAN';
+      case 'pecukan_agile': return 'SKIN_PECUKAN'; // Jika 'pecukan_agile', gunakan aset 'SKIN_PECUKAN'
+      case 'janggan_legend': return 'SKIN_KUWIR'; // Jika 'janggan_legend', gunakan aset 'SKIN_KUWIR'.
+      default: return 'SKIN_BEBEAN'; //Default jika ID tidak dikenal.
     }
   }
 
@@ -37,12 +37,12 @@ export class Player {
   //Rumus this.x += (this.targetX - this.x) * speed menciptakan efek "smoothing" (meluncur) ke jalur target, bukan lompatan instan.
   update(dt) {
     // Smooth movement
-    const speed = 15 * dt;
-    this.x += (this.targetX - this.x) * speed;
+    const speed = 15 * dt; // Pergerakan Halus (Visual Smoothing)
+    this.x += (this.targetX - this.x) * speed; // Menggerakkan posisi X saat ini menuju targetX secara bertahap (efek meluncur visual)
     
     // Bobbing animation
     //Menciptakan efek gerakan mengambang.	Menggunakan Math.sin(Date.now() / 200) * 5 untuk mengubah posisi Y sedikit demi sedikit secara sinusoidal, meniru gerakan naik-turun yang ringan.
-    this.y = (CONFIG.CANVAS_HEIGHT - 150) + Math.sin(Date.now() / 200) * 5;
+    this.y = (CONFIG.CANVAS_HEIGHT - 150) + Math.sin(Date.now() / 200) * 5; // Menghitung posisi Y baru dengan menambahkan efek sinusoidal (gerakan naik-turun ringan)
   }
 
   //Menggambar visual pemain di Canvas.	Mengambil kunci aset (this.skinKey) dan mendapatkan gambar dari GameManager.instance.assetLoader.
@@ -54,8 +54,8 @@ export class Player {
     if (img) {
       ctx.drawImage(
         img, 
-        this.x - this.width / 2, 
-        this.y - this.height / 2, 
+        this.x - this.width / 2, // Posisi X dikoreksi agar gambar terpusat.
+        this.y - this.height / 2, // Posisi Y dikoreksi agar gambar terpusat.
         this.width, 
         this.height
       );
