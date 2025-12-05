@@ -1,3 +1,4 @@
+//mengatur tampilan game tampilan, hud
 // Mengimpor konstanta penting dan class utility
 import { GAME_STATE, SHOP_ITEMS, ASSETS } from "../utils/Constants.js"; // Mengimpor konstanta global seperti state game, item shop, dan asset gambar
 import { Storage } from "../utils/Storage.js"; // Mengimpor class Storage untuk menyimpan data lokal (coins, item, highscore, dll
