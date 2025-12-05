@@ -1,3 +1,4 @@
+//untuk mengatur jalannya game
 //Mendefinisikan ketergantungan (dependensi) kelas GameManager seperti Mengimpor Konstanta (GAME_STATE, CONFIG), Entitas (Player, Obstacle, Coin), dan Manajer Layanan (InputHandler, UIManager, AssetLoader, dll.).
 import {
   GAME_STATE,
