@@ -1,5 +1,4 @@
 import { supabaseService } from '../services/SupabaseService.js';
-
 export class Storage {
   // Mengambil skor tertinggi dari penyimpanan lokal
   static getHighScore() {
