@@ -1,3 +1,4 @@
+//mengeload semua asset pada saat login
 //pernyataan import dari JavaScript untuk mengambil objek dari assets berkas.
 import { ASSETS } from "../utils/Constants.js";
 
