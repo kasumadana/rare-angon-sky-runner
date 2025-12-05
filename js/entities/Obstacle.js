@@ -1,3 +1,4 @@
+//untuk mengatur musuh yang ada di game seperti burung dan drone
 import { CONFIG, PALETTE, OBSTACLE_TYPE, SPRITES } from "../utils/Constants.js";
 import { GameManager } from "../core/GameManager.js";
 
