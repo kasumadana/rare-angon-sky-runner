@@ -1,3 +1,4 @@
+//untuk mengatur layangan layangan yang ada di game
 import { CONFIG, LANES, SPRITES } from "../utils/Constants.js";
 import { GameManager } from "../core/GameManager.js";
 
