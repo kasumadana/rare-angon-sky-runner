@@ -1,3 +1,4 @@
+//untuk mengatur objek koin yang ada di game
 //Menyediakan konstanta dan akses ke Manajer Game.	Mengimpor CONFIG, PALETTE, 
 //SPRITES (untuk dimensi) dan GameManager (untuk mengakses AssetLoader).
 import { CONFIG, PALETTE, SPRITES } from "../utils/Constants.js";
