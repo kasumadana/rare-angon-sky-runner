@@ -1,4 +1,4 @@
-export const GAME_STATE = {
+export const GAME_STATE = { //menyimpan semua data besar yang di gunakan di seluruh game
   LOADING: "LOADING", // Status saat game sedang memuat aset
   MENU: "MENU", // Status saat berada di menu utama
   SHOP: "SHOP", // Status saat berada di toko
@@ -7,7 +7,7 @@ export const GAME_STATE = {
   PAUSED: "PAUSED", // Status saat permainan dijeda
 };
 
-export const CONFIG = {
+export const CONFIG = { // mengatur alur game
   CANVAS_WIDTH: 800, // Lebar kanvas permainan
   CANVAS_HEIGHT: 600, // Tinggi kanvas permainan
   BASE_SPEED: 250, // Kecepatan dasar pergerakan objek
@@ -16,7 +16,7 @@ export const CONFIG = {
   DEBUG_MODE: false, // Mode debug untuk pengembangan
 };
 
-export const LANES = {
+export const LANES = { // digunakan untuk posisi pemain
   LEFT: 0, // Jalur kiri
   CENTER: 1, // Jalur tengah
   RIGHT: 2, // Jalur kanan

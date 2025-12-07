@@ -2,6 +2,7 @@
  * Object Pool Generik untuk entitas game
  * Mengurangi beban garbage collection dengan menggunakan kembali objek
  */
+//mengatur dan mendaur ulang dimunculin lagi dengan cara ngerespawn
 export class ObjectPool {
   constructor(ClassType, initialSize = 50) {
     this.ClassType = ClassType;

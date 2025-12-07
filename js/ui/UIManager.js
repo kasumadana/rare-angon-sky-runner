@@ -1,3 +1,4 @@
+//mengatur tampilan game tampilan, hud
 // Mengimpor konstanta penting dan class utility
 import { GAME_STATE, SHOP_ITEMS, ASSETS } from "../utils/Constants.js";
 import { Storage } from "../utils/Storage.js";

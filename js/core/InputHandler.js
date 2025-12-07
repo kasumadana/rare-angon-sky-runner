@@ -1,3 +1,4 @@
+//buat ngatur input dari player seperti webccam
 //Menyediakan konstanta penting dan referensi eksternal
 //Mengimpor LANES (jalur) dan GAME_STATE (status game).
 import { LANES, GAME_STATE } from "../utils/Constants.js";

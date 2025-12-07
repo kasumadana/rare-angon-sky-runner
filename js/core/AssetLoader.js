@@ -1,3 +1,4 @@
+//mengeload semua asset pada saat login
 //pernyataan import dari JavaScript untuk mengambil objek dari assets berkas.
 import { ASSETS } from "../utils/Constants.js";
 
@@ -79,7 +80,7 @@ export class AssetLoader {
       audio.src = url;
       audio.load();
 
-      // Timeout fallback if sound takes too long (browser policy or network)
+      // Timeout fallback jika suara terlalu lama (kebijakan browser atau jaringan)
       setTimeout(() => {
         if (!this.sounds[key]) {
           // console.warn(`Sound load timeout: ${key}`);

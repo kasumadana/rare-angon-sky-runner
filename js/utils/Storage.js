@@ -1,5 +1,4 @@
 import { supabaseService } from '../services/SupabaseService.js';
-
 export class Storage {
   // Helper internal untuk akses localStorage yang aman
   static _safeGet(key) {
