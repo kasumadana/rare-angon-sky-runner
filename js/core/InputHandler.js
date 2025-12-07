@@ -31,7 +31,7 @@ export class InputHandler {
   }
 
   //Memulai semua mekanisme input.	Selalu memanggil _setupKeyboardTouch. 
-  //Jika bukan mobile, ia mencoba memanggil _setupWebcam() dan _loadModel() dengan mekanisme timeout 5 detik sebagai fallback ke input manual jika inisialisasi gagal.
+  //Jika bukan mobile, ia mencoba memanggil _setupWebcam() dan _loadModel() dengan mekanisme timeout 10 detik sebagai fallback ke input manual jika inisialisasi gagal.
   async init() {
     this._setupKeyboardTouch();
     
@@ -44,10 +44,10 @@ export class InputHandler {
       return;
     }
     
-    // Timeout untuk mencegah stuck jika webcam gagal
+    // Timeout untuk mencegah stuck jika webcam gagal (FIX: 10 Detik)
     const initWithTimeout = async () => {
       const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Webcam timeout')), 5000)
+        setTimeout(() => reject(new Error('Webcam timeout')), 10000)
       );
       
       const init = (async () => {
@@ -80,9 +80,10 @@ export class InputHandler {
     if (!this.isDetecting && this.isWebcamReady && this.model) {
       this.isDetecting = true;
       this._detectionLoop();
-      const statusEl = document.querySelector(".cam-status");
+      // Update UI feedback to ACTIVE
+      this._updateFeedbackUI("MENCARI TANGAN...", false);
+      
       const dotEl = document.querySelector(".rec-dot");
-      if (statusEl) statusEl.innerText = "Mendeteksi Gestur...";
       if (dotEl) dotEl.style.display = "block";
     }
   }
@@ -95,10 +96,19 @@ export class InputHandler {
       this.debugCtx.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
     }
     
-    const statusEl = document.querySelector(".cam-status");
+    this._updateFeedbackUI("SIAGA", false);
+    
     const dotEl = document.querySelector(".rec-dot");
-    if (statusEl) statusEl.innerText = "Siaga";
     if (dotEl) dotEl.style.display = "none";
+  }
+  
+  // Helper untuk update UI teks gestur
+  _updateFeedbackUI(text, isActive) {
+      const feedbackEl = document.querySelector("#gesture-feedback .gesture-text");
+      if (feedbackEl) {
+          feedbackEl.innerText = text;
+          feedbackEl.style.color = isActive ? "#00FF00" : "var(--accent-gold)"; // Hijau jika aktif, Emas jika netral
+      }
   }
 
   //Mengatur event listener untuk input tradisional.	Keyboard: Menggunakan tombol panah (ArrowLeft, ArrowRight) atau (a, d) untuk memanggil player.moveLeft() atau player.moveRight().
@@ -106,7 +116,16 @@ export class InputHandler {
   _setupKeyboardTouch() {
     // Keyboard
     window.addEventListener("keydown", (e) => {
-      if (this.gameManager.currentState !== GAME_STATE.PLAYING) return;
+      // Allow pause via 'P' or 'Escape'
+      if (e.key === "p" || e.key === "P" || e.key === "Escape") {
+         if (this.gameManager.currentState === GAME_STATE.PLAYING || this.gameManager.isPaused) {
+             this.gameManager.togglePause();
+         }
+         return;
+      }
+
+      if (this.gameManager.currentState !== GAME_STATE.PLAYING || this.gameManager.isPaused) return;
+
       const player = this.gameManager.player;
       if (!player) return;
 
@@ -119,7 +138,7 @@ export class InputHandler {
     const btnRight = document.querySelector(".d-btn.right");
 
     const handleTouch = (dir) => {
-      if (this.gameManager.currentState === GAME_STATE.PLAYING) {
+      if (this.gameManager.currentState === GAME_STATE.PLAYING && !this.gameManager.isPaused) {
         if (dir === "left") this.gameManager.player.moveLeft();
         if (dir === "right") this.gameManager.player.moveRight();
       }
@@ -155,18 +174,24 @@ export class InputHandler {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
       throw new Error("No Webcam");
     
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 320, height: 240, facingMode: "user" },
-    });
-    this.video.srcObject = stream;
-    
-    return new Promise((resolve) => {
-      this.video.onloadedmetadata = () => {
-        this.video.play();
-        this.isWebcamReady = true;
-        resolve();
-      };
-    });
+    // FIX: Add minimal error handling if device busy
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240, facingMode: "user" },
+        });
+        this.video.srcObject = stream;
+        
+        return new Promise((resolve) => {
+          this.video.onloadedmetadata = () => {
+            this.video.play();
+            this.isWebcamReady = true;
+            resolve();
+          };
+        });
+    } catch(e) {
+        console.warn("Camera access denied or used by another app:", e);
+        throw e;
+    }
   }
 
   //Memuat model Machine Learning untuk pengenalan tangan.	
@@ -185,7 +210,7 @@ export class InputHandler {
     if (!this.isDetecting) return;
 
     const detect = async () => {
-      if (!this.isDetecting) return;
+      if (!this.isDetecting || this.gameManager.isPaused) return; // Stop if paused
 
       const now = performance.now();
       
@@ -201,6 +226,9 @@ export class InputHandler {
             const hand = predictions[0];
             this._drawSkeleton(hand.landmarks);
             this._processGesture(hand.landmarks);
+          } else {
+             // Reset feedback if no hand
+             this._updateFeedbackUI("Mendeteksi...", false);
           }
         }
       }
@@ -259,6 +287,8 @@ export class InputHandler {
 
     // Execute Command
     if (this.commandStabilityCounter >= 3) { // Require 3 stable frames (~250ms)
+      this._updateFeedbackUI(gestureName, true); // Update Text to Green (Active)
+
       if (now - this.lastActionTime > this.actionCooldown) {
         const player = this.gameManager.player;
         if (player && targetLane !== null) {
@@ -276,6 +306,9 @@ export class InputHandler {
           }
         }
       }
+    } else {
+      // Update text to default gold if not stable yet or neutral
+      this._updateFeedbackUI(gestureName, false);
     }
   }
 
@@ -286,9 +319,11 @@ export class InputHandler {
     const w = this.debugCanvas.width;
     const h = this.debugCanvas.height;
     
+    // Video aspect ratio correction
     const vw = this.video.videoWidth || 320;
     const vh = this.video.videoHeight || 240;
     
+    // We want to draw on the canvas which might have different aspect ratio than video
     const scaleX = w / vw;
     const scaleY = h / vh;
 
@@ -318,24 +353,6 @@ export class InputHandler {
         ctx.fillStyle = [4,8,12,16,20].includes(i) ? "#FF0000" : "#FFFF00";
         ctx.arc(x, y, 3, 0, 2 * Math.PI);
         ctx.fill();
-    }
-
-    // Draw HUD
-    if (this.detectedGesture) {
-        ctx.save();
-        ctx.translate(w / 2, h / 2);
-        ctx.scale(-1, 1); // Mirror text back
-        
-        ctx.font = "bold 30px Arial";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.textAlign = "center";
-        
-        ctx.strokeText(this.detectedGesture, 0, 0);
-        ctx.fillText(this.detectedGesture, 0, 0);
-        
-        ctx.restore();
     }
   }
 }

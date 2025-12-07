@@ -171,19 +171,18 @@ export class AccountManager {
       } else if (type === "personal") {
         if (!this.isLoggedIn) return []; // Kalau belum login, enggak ada skor pribadi
 
-        const { bestScore } = await supabaseService.getPersonalBest(); // Ambil skor terbaik pengguna ini
+        // Load 5 PERSONAL SCORES instead of single best
+        const { scores } = await supabaseService.getPersonalHistory(5); 
         const username = this.getDisplayUsername(); // Dapatkan nama untuk ditampilkan
 
-        return [
-          {
-            // Kembalikan skor pribadi dalam format seperti leaderboard
-            score: bestScore,
+        if(!scores || scores.length === 0) return [];
+
+        return scores.map(s => ({
+            score: s.score,
             profiles: {
               username: username,
-              avatar_id: "bebean_std",
-            },
-          },
-        ];
+            }
+        }));
       }
     } catch (e) {
       console.error("Gagal memuat leaderboard:", e);
@@ -269,10 +268,10 @@ export class AccountManager {
         const rankClass = rank <= 3 ? `top-${rank}` : ""; // Beri warna khusus untuk peringkat 1-3
         const username =
           entry.username || entry.profiles?.username || "Anonymous"; // Ambil nama pengguna
-        const avatar =
-          entry.avatar_id || entry.profiles?.avatar_id || "bebean_std"; // Ambil ID avatar
+
         const score = entry.score || 0; // Ambil skornya
 
+        // Avatar not used in current CSS, simplifying
         return `
         <div class="leaderboard-entry">
           <div class="leaderboard-rank ${rankClass}">#${rank}</div>
@@ -284,18 +283,6 @@ export class AccountManager {
       `;
       })
       .join(""); // Gabungkan semua baris menjadi satu HTML
-  }
-
-  getAvatarEmoji(avatarId) {
-    const avatars = {
-      // Daftar gambar avatar
-      bebean_std: "assets/images/kite_bebean.png",
-      pecukan_agile: "assets/images/kite_pecukan.png",
-      janggan_legend: "assets/images/kite_kuwir.png",
-    };
-
-    const src = avatars[avatarId] || "assets/images/kite_bebean.png"; // Tentukan gambar yang dipakai
-    return `<img src="${src}" class="icon-sm" alt="Avatar" style="vertical-align: middle;">`; // Kembalikan tag HTML gambarnya
   }
 
   getDisplayUsername() {

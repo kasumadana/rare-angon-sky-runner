@@ -13,7 +13,7 @@
       content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:;"
     />
 
-    <title>Rare Angon: The Sky Running</title>
+    <title>Rare Angon: The Sky Runner</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/images/item_coin.png" />
@@ -53,18 +53,38 @@
 
       <!-- HUD (In-Game Only) -->
       <div id="ui-hud" style="display: none">
-        <div class="hud-panel">
-          <div class="hud-row">
-            <span class="hud-label">SKOR</span>
-            <span id="hud-score" class="hud-value">00000</span>
-          </div>
-          <div class="hud-row">
-            <span class="hud-label">KOIN</span>
-            <div class="coin-display">
-              <img src="assets/images/item_coin.png" class="icon-sm" alt="C" />
-              <span id="hud-coin" class="hud-value">0</span>
+        <!-- LEFT COLUMN: Stats & Leaderboard -->
+        <div class="hud-left">
+            <div class="hud-panel">
+                <div class="hud-row">
+                    <span class="hud-label">SKOR</span>
+                    <span id="hud-score" class="hud-value">00000</span>
+                </div>
+                <div class="hud-row">
+                    <span class="hud-label">KOIN</span>
+                    <div class="coin-display">
+                        <img src="assets/images/item_coin.png" class="icon-sm" alt="C" />
+                        <span id="hud-coin" class="hud-value">0</span>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <!-- Mini Leaderboard (Desktop Only) -->
+            <div id="mini-leaderboard" class="mini-leaderboard">
+                <h4>TOP 5 SKOR</h4>
+                <div id="mini-lb-list">
+                    <!-- Injected via JS -->
+                    <div class="mini-lb-item">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Controls -->
+        <div class="hud-right">
+            <!-- Pause Button -->
+            <button id="btn-pause" class="btn-icon-hud" aria-label="Pause">
+                <i class="fas fa-pause"></i>
+            </button>
         </div>
       </div>
 
@@ -72,7 +92,7 @@
       <div id="screen-loading" class="overlay-screen flex-center">
         <div class="panel loading-panel">
           <h2 class="blink"><i class="fas fa-hourglass-half"></i> MEMUAT...</h2>
-          <p class="subtitle">Menyiapkan Mantra AI</p>
+          <p class="subtitle">Menyiapkan Game</p>
           <div class="loading-bar"><div class="loading-progress"></div></div>
         </div>
       </div>
@@ -110,11 +130,14 @@
             </button>
 
             <div class="btn-row">
-              <button id="btn-shop" class="btn-retro secondary">
+              <button id="btn-shop" class="btn-retro secondary flex-grow">
                 <span><i class="fas fa-shopping-cart"></i> WARUNG</span>
               </button>
-              <button id="btn-leaderboard" class="btn-retro secondary">
+              <button id="btn-leaderboard" class="btn-retro secondary flex-grow">
                 <span><i class="fas fa-trophy"></i> SKOR</span>
+              </button>
+              <button id="btn-info" class="btn-retro secondary btn-square">
+                <i class="fas fa-info-circle"></i>
               </button>
             </div>
 
@@ -124,29 +147,70 @@
               >
             </button>
           </div>
+        </div>
+      </div>
 
-          <div class="hint-box">
-            <p><i class="fas fa-gamepad"></i> KONTROL TANGAN</p>
-            <div class="gestures">
-              <div class="gesture-item">
-                <img src="assets/images/one-finger.png" alt="1 Finger" /><small
-                  >KIRI (1)</small
-                >
+            <!-- Info/Guide Screen (NEW) -->
+      <div id="screen-info" class="overlay-screen flex-center" style="display: none">
+        <div class="panel info-panel-wrapper">
+          <h2><i class="fas fa-book-open"></i> PANDUAN & INFO</h2>
+          
+          <div class="info-scroll-content">
+            <!-- Tentang -->
+            <div class="info-section">
+              <h3 class="info-title">TENTANG RARE ANGON</h3>
+              <p>
+                Game ini terinspirasi oleh tradisi layangan Bali. "Rare Angon" adalah manifestasi Dewa Siwa sebagai anak gembala pelindung layang-layang.
+              </p>
+            </div>
+
+            <!-- Cara Main -->
+            <div class="info-section">
+              <h3 class="info-title">CARA BERMAIN</h3>
+              <p>
+                Terbangkan layanganmu setinggi mungkin! Hindari layangan musuh, burung, dan awan gelap. Kumpulkan koin untuk membeli skin baru.
+              </p>
+            </div>
+
+            <!-- Kontrol -->
+            <div class="info-section no-border">
+              <h3 class="info-title">KONTROL (PENTING)</h3>
+              
+              <div class="control-block">
+                <h4><i class="fas fa-camera"></i> MODE KAMERA (AI)</h4>
+                <div class="gestures-grid">
+                  <div class="gesture-item">
+                    <img src="assets/images/one-finger.png" alt="1 Finger" />
+                    <small>KIRI (1)</small>
+                  </div>
+                  <div class="gesture-item">
+                    <img src="assets/images/two-fingers.png" alt="2 Fingers" />
+                    <small>TENGAH (2)</small>
+                  </div>
+                  <div class="gesture-item">
+                    <img src="assets/images/three-fingers.png" alt="3 Fingers" />
+                    <small>KANAN (3)</small>
+                  </div>
+                </div>
               </div>
-              <div class="gesture-item">
-                <img
-                  src="assets/images/two-fingers.png"
-                  alt="2 Fingers"
-                /><small>TENGAH (2)</small>
+
+              <div class="control-block">
+                <h4><i class="fas fa-keyboard"></i> KEYBOARD (PC)</h4>
+                <p>Gunakan tombol <strong>Panah Kiri/Kanan</strong> atau <strong>A / D</strong> untuk bergerak.</p>
+                <p>Tekan <strong>P</strong> atau <strong>ESC</strong> untuk Pause.</p>
               </div>
-              <div class="gesture-item">
-                <img
-                  src="assets/images/three-fingers.png"
-                  alt="3 Fingers"
-                /><small>KANAN (3)</small>
+
+              <div class="control-block">
+                <h4><i class="fas fa-mobile-alt"></i> LAYAR SENTUH (HP)</h4>
+                <p>Gunakan tombol panah di layar (Kiri/Kanan) jika kamera tidak tersedia.</p>
               </div>
             </div>
+
           </div>
+
+          <button id="btn-info-back" class="btn-retro secondary btn-wide">
+            <i class="fas fa-arrow-left"></i> KEMBALI
+          </button>
         </div>
       </div>
 
@@ -182,6 +246,21 @@
           <button id="btn-shop-back" class="btn-retro secondary btn-wide">
             <i class="fas fa-arrow-left"></i> KEMBALI
           </button>
+        </div>
+      </div>
+
+      <!-- PAUSED Screen (NEW) -->
+      <div id="screen-paused" class="overlay-screen flex-center" style="display: none">
+        <div class="panel paused-panel">
+            <h1 class="blink">PAUSED</h1>
+            <div class="pause-menu">
+                <button id="btn-resume" class="btn-retro primary btn-wide">
+                    <i class="fas fa-play"></i> LANJUT
+                </button>
+                <button id="btn-quit-menu" class="btn-retro secondary btn-wide">
+                    <i class="fas fa-home"></i> MENU UTAMA
+                </button>
+            </div>
         </div>
       </div>
 
@@ -346,22 +425,19 @@
         </div>
       </div>
 
-      <!-- Webcam Container -->
+      <!-- Webcam Container (Updated) -->
       <div class="webcam-container" style="display: none">
         <div class="rec-badge">AI CAM</div>
-        <div
-          class="cam-status"
-          style="
-            position: absolute;
-            bottom: 2px;
-            left: 5px;
-            font-size: 8px;
-            color: white;
-            z-index: 10;
-          "
-        >
-          Siaga
+        
+        <div class="video-wrapper">
+             <video id="webcam" playsinline></video>
+             <canvas id="debugCanvas"></canvas>
         </div>
+
+        <div id="gesture-feedback" class="gesture-feedback-panel">
+            <span class="gesture-text">Siaga</span>
+        </div>
+        
         <div
           class="rec-dot"
           style="
@@ -376,8 +452,6 @@
             z-index: 10;
           "
         ></div>
-        <video id="webcam" playsinline></video>
-        <canvas id="debugCanvas"></canvas>
       </div>
     </div>
 

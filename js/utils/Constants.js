@@ -4,6 +4,7 @@ export const GAME_STATE = {
   SHOP: "SHOP", // Status saat berada di toko
   PLAYING: "PLAYING", // Status saat permainan sedang berlangsung
   GAMEOVER: "GAMEOVER", // Status saat permainan berakhir
+  PAUSED: "PAUSED", // Status saat permainan dijeda
 };
 
 export const CONFIG = {
@@ -80,7 +81,7 @@ export const SPRITES = {
   },
   DRONE: {
     WIDTH: 50, // Lebar sprite drone
-    HEIGHT: 50 // Tinggi sprite drone
+    HEIGHT: 50, // Tinggi sprite drone
   },
   PLAYER: {
     WIDTH: 120, // Lebar sprite pemain
@@ -115,3 +116,10 @@ export const SHOP_ITEMS = [
     description: "Layangan kuwir legendaris" // Deskripsi item
   },
 ];
+
+export const SKY_PHASES = [
+  { score: 0, top: "#48CAE4", bottom: "#ADE8F4" },     // Pagi: Biru Cerah
+  { score: 500, top: "#F48C06", bottom: "#FFBA08" },   // Sore: Oranye
+  { score: 1000, top: "#6A0572", bottom: "#AB83A1" },  // Senja: Ungu
+  { score: 2000, top: "#03071E", bottom: "#370617" }   // Malam: Gelap
+]; // Palet Waktu Dinamis berdasarkan Skor

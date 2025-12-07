@@ -4,6 +4,7 @@ import {
   CONFIG,
   OBSTACLE_TYPE,
   PALETTE,
+  SKY_PHASES
 } from "../utils/Constants.js";
 import { Player } from "../entities/Player.js";
 import { Obstacle } from "../entities/Obstacle.js";
@@ -26,6 +27,9 @@ export class GameManager {
     this.currentState = GAME_STATE.LOADING;
     this.score = 0;
     this.coinsCollected = 0;
+    
+    // Pause State
+    this.isPaused = false;
 
     this.player = null;
     
@@ -114,15 +118,38 @@ export class GameManager {
     // BGM Logic
     if (newState === GAME_STATE.MENU) {
       this.playBGM('BGM_MENU');
+      this.isPaused = false; // Reset pause on menu
     } else if (newState === GAME_STATE.PLAYING) {
       this.playBGM('BGM_GAMEPLAY');
       this.resetGame();
       this.inputHandler.startDetection();
+      this.isPaused = false;
     } else if (newState === GAME_STATE.GAMEOVER) {
       this.stopBGM(); 
       this.inputHandler.stopDetection();
+      this.isPaused = false;
     } else {
       this.inputHandler.stopDetection();
+    }
+  }
+
+  // PAUSE SYSTEM
+  togglePause() {
+    if (this.currentState !== GAME_STATE.PLAYING) return;
+    
+    this.isPaused = !this.isPaused;
+    
+    if (this.isPaused) {
+      console.log("Game Paused");
+      if (this.bgm) this.bgm.pause();
+      this.uiManager.showPaused(true);
+      this.inputHandler.stopDetection(); // Stop AI to save resources
+    } else {
+      console.log("Game Resumed");
+      if (this.bgm) this.bgm.play().catch(e=>{});
+      this.lastTime = performance.now(); // Reset delta time to avoid huge jump
+      this.uiManager.showPaused(false);
+      this.inputHandler.startDetection(); // Resume AI
     }
   }
 
@@ -132,6 +159,7 @@ export class GameManager {
     this.score = 0;
     this.coinsCollected = 0;
     this.gameSpeed = CONFIG.BASE_SPEED;
+    this.isPaused = false;
     
     this.obstaclePool.releaseAll();
     this.coinPool.releaseAll();
@@ -185,8 +213,10 @@ export class GameManager {
 
     const safeDt = Math.min(dt, 0.1);
 
-    this.update(safeDt);
-    this.draw();
+    if (!this.isPaused) {
+        this.update(safeDt);
+    }
+    this.draw(); // Always draw to keep screen visible (maybe draw paused overlay on top via DOM)
 
     requestAnimationFrame(this.loop);
   }
@@ -288,10 +318,47 @@ export class GameManager {
   draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Background
+    // Background (Range-Based Sky Transitions)
+    // Range 1: 0 - 500 (Pagi)
+    // Range 2: 501 - 600 (Transisi Pagi ke Sore)
+    // Range 3: 601 - 1000 (Sore)
+    // Range 4: 1001 - 1100 (Transisi Sore ke Malam)
+    // Range 5: 1100+ (Malam)
+    
+    const PHASE_MORNING = { top: "#48CAE4", bottom: "#ADE8F4" };
+    const PHASE_AFTERNOON = { top: "#F48C06", bottom: "#FFBA08" }; // Oranye
+    const PHASE_NIGHT = { top: "#03071E", bottom: "#370617" }; // Gelap
+
+    let skyTop, skyBottom;
+    const score = this.score;
+
+    if (score <= 500) {
+        // Pagi Statis
+        skyTop = PHASE_MORNING.top;
+        skyBottom = PHASE_MORNING.bottom;
+    } else if (score > 500 && score <= 600) {
+        // Transisi Pagi -> Sore (Lerp)
+        const t = (score - 500) / 100; // 0 to 1
+        skyTop = this._lerpColor(PHASE_MORNING.top, PHASE_AFTERNOON.top, t);
+        skyBottom = this._lerpColor(PHASE_MORNING.bottom, PHASE_AFTERNOON.bottom, t);
+    } else if (score > 600 && score <= 1000) {
+        // Sore Statis
+        skyTop = PHASE_AFTERNOON.top;
+        skyBottom = PHASE_AFTERNOON.bottom;
+    } else if (score > 1000 && score <= 1100) {
+        // Transisi Sore -> Malam (Lerp)
+        const t = (score - 1000) / 100; // 0 to 1
+        skyTop = this._lerpColor(PHASE_AFTERNOON.top, PHASE_NIGHT.top, t);
+        skyBottom = this._lerpColor(PHASE_AFTERNOON.bottom, PHASE_NIGHT.bottom, t);
+    } else {
+        // Malam Statis
+        skyTop = PHASE_NIGHT.top;
+        skyBottom = PHASE_NIGHT.bottom;
+    }
+
     const grad = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-    grad.addColorStop(0, PALETTE.SKY_TOP);
-    grad.addColorStop(1, PALETTE.SKY_BOTTOM);
+    grad.addColorStop(0, skyTop);
+    grad.addColorStop(1, skyBottom);
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
@@ -323,5 +390,18 @@ export class GameManager {
         this.ctx.restore();
       }
     });
+  }
+
+  // Helper: Linear Interpolation for Hex Colors
+  _lerpColor(a, b, amount) {
+      const ah = parseInt(a.replace(/#/g, ''), 16),
+            ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
+            bh = parseInt(b.replace(/#/g, ''), 16),
+            br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
+            rr = ar + amount * (br - ar),
+            rg = ag + amount * (bg - ag),
+            rb = ab + amount * (bb - ab);
+
+      return '#' + ((1 << 24) + (Math.round(rr) << 16) + (Math.round(rg) << 8) + Math.round(rb)).toString(16).slice(1);
   }
 }

@@ -198,48 +198,39 @@ class SupabaseService {
 
   /**
    * Ambil daftar skor terbaik global (top scores).
+   * Menggunakan Standard Query dengan DEDUPLIKASI manual di sisi klien.
+   * FIXED: Meningkatkan limit fetch untuk memastikan player lain tidak tertutup oleh player top.
    * @param {number} limit Jumlah data yang mau diambil (default 100)
    * @returns {Promise<{leaderboard, error}>} Hasilnya adalah {daftar peringkat atau error}
    */
   async getLeaderboard(limit = 100) {
-    // Coba pakai fungsi khusus dari database (RPC) untuk efisiensi.
-    const { data, error } = await this.supabase.rpc('get_leaderboard', {
-      limit_count: limit // Kirim batas jumlah data
-    });
+    // 1. Fetch SANGAT BANYAK data (1000) untuk menembus dominasi satu player
+    const fetchLimit = 1000; 
+    
+    const { data, error } = await this.supabase
+      .from('leaderboards')
+      .select('user_id, score, profiles(username)') 
+      .order('score', { ascending: false }) 
+      .limit(fetchLimit);
 
-    // Kalau RPC gagal (misalnya karena belum disetup di database), pakai cara lama (fallback query).
-    if (error && (error.code === '42883' || error.code === 'PGRST202')) {
-      console.warn('Fungsi RPC tidak ditemukan, menggunakan cara cadangan...');
-      const { data: allScores, error: fetchError } = await this.supabase
-        .from('leaderboards')
-        .select(`
-          user_id,
-          score,
-          created_at,
-          profiles (username, avatar_id)
-        `)
-        .order('score', { ascending: false }); // Urutkan dari skor tertinggi
-
-      if (fetchError) return { leaderboard: null, error: fetchError };
-
-      // Kelompokkan skor: Ambil hanya skor terbaik untuk setiap pengguna.
-      const bestScores = {};
-      allScores.forEach(entry => {
-        const userId = entry.user_id;
-        if (!bestScores[userId] || entry.score > bestScores[userId].score) {
-          bestScores[userId] = entry;
-        }
-      });
-
-      // Jadikan array lagi, urutkan, dan batasi jumlahnya.
-      const leaderboard = Object.values(bestScores)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, limit);
-
-      return { leaderboard, error: null };
+    if (error) {
+      console.error('Gagal mengambil leaderboard:', error);
+      return { leaderboard: [], error };
     }
 
-    return { leaderboard: data, error }; // Kembalikan hasil dari RPC
+    // 2. Client-side Deduplication: Keep ONLY highest score per user
+    const uniqueUsers = new Map();
+    const sortedUnique = [];
+
+    for (const entry of data) {
+        if (!uniqueUsers.has(entry.user_id)) {
+            uniqueUsers.set(entry.user_id, true);
+            sortedUnique.push(entry);
+        }
+        if (sortedUnique.length >= limit) break; // Stop loop jika sudah cukup
+    }
+
+    return { leaderboard: sortedUnique, error: null };
   }
 
   /**
@@ -258,6 +249,41 @@ class SupabaseService {
       .single();
 
     return { bestScore: data?.score || 0, error }; // Kembalikan skor, defaultnya 0
+  }
+
+  /**
+   * Ambil riwayat 5 skor terbaik pribadi.
+   * FIXED: Menambahkan DEDUPLIKASI untuk skor personal agar tidak muncul skor kembar.
+   * @returns {Promise<{scores, error}>}
+   */
+  async getPersonalHistory(limit = 5) {
+      if (!this.currentUser) return { scores: [], error: null };
+
+      // Ambil lebih banyak data (misal 50) untuk memastikan variasi nilai skor
+      const fetchLimit = 50; 
+
+      const { data, error } = await this.supabase
+        .from('leaderboards')
+        .select('score')
+        .eq('user_id', this.currentUser.id)
+        .order('score', { ascending: false })
+        .limit(fetchLimit);
+        
+      if(error) return { scores: [], error };
+
+      // Deduplikasi Skor (Hanya simpan nilai skor unik)
+      const uniqueScores = [];
+      const scoreSet = new Set();
+      
+      for(const item of data) {
+          if(!scoreSet.has(item.score)) {
+              scoreSet.add(item.score);
+              uniqueScores.push(item);
+          }
+          if(uniqueScores.length >= limit) break;
+      }
+
+      return { scores: uniqueScores, error: null };
   }
 
   // ==================== INVENTARIS (BARANG) ========================
